@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "spawnerfinder",
+	"version": "${version}",
+	"name": "SpawnerFinder",
+	"description": "A client-side mod that highlights mob spawners with different colors based on their mob type to help you find dungeons easily!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/spawnerfinder/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"github.ssourabh58.spawnerfinder.SpawnerFinder"
+		],
+		"client": [
+			"github.ssourabh58.spawnerfinder.SpawnerFinderClient"
+		]
+	},
+	"mixins": [
+		"spawnerfinder.mixins.json",
+		{
+			"config": "spawnerfinder.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.17.3",
+		"minecraft": "~1.21.8",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
