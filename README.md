@@ -2,6 +2,11 @@
 
 A client-side Minecraft mod that displays nearby mob spawners in your HUD with color-coded information showing spawner type, coordinates, and distance to help you locate dungeons efficiently.
 
+## 📸 Screenshots
+
+![SpawnerFinder Sample](sampleimage.png)
+*SpawnerFinder HUD displaying nearby mob spawners with coordinates and distances*
+
 ## 🎯 Features
 
 ### Core Functionality
