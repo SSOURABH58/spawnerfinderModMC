@@ -139,11 +139,55 @@ This project is licensed under the CC0-1.0 License - see the [LICENSE](LICENSE) 
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+### 📋 TODO List for Contributors
+
+#### High Priority Features
+- [ ] **Toggle Button with Keybind** - Add configurable hotkey to enable/disable the HUD display
+- [ ] **Settings GUI** - Create in-game configuration menu accessible via keybind or mod menu
+- [ ] **Scrollable Spawner List** - Expand beyond 5 spawners with scrollable interface
+
+#### Configuration Options
+- [ ] **HUD Customization**
+  - [ ] Position adjustment (drag & drop or coordinate input)
+  - [ ] Size scaling (small, medium, large)
+  - [ ] Color customization for each mob type
+  - [ ] Opacity/transparency settings
+- [ ] **Display Options**
+  - [ ] Show/hide coordinates
+  - [ ] Show/hide distance
+  - [ ] Show/hide mob type names
+  - [ ] Custom distance units (blocks/meters)
+
+#### Advanced Features
+- [ ] **Multi-Mod Spawner Detection** - Support for modded spawners and custom mob types
+- [ ] **Spawner Groups** - Categorize spawners by biome, dimension, or custom groups
+- [ ] **Enhanced Filtering**
+  - [ ] Filter by mob type
+  - [ ] Filter by distance range
+  - [ ] Blacklist specific spawner types
+- [ ] **Export/Import** - Save and share spawner locations
+
+#### Technical Improvements
+- [ ] **Performance Optimization** - Reduce scanning overhead for large areas
+- [ ] **Memory Management** - Optimize spawner data storage and cleanup
+- [ ] **Compatibility Layer** - Better integration with other client-side mods
+
+#### UI/UX Enhancements
+- [ ] **Modern GUI Design** - Clean, intuitive configuration interface
+- [ ] **Tooltips and Help** - In-game help system for new users
+- [ ] **Preset Configurations** - Quick setup options for different playstyles
+
 ### Development Setup
 1. Clone the repository
 2. Import into your IDE (IntelliJ IDEA recommended)
 3. Run `./gradlew genEclipseRuns` or `./gradlew genIntellijRuns`
 4. Use the generated run configurations for testing
+
+### Contributing Guidelines
+- Follow existing code style and patterns
+- Test thoroughly before submitting PRs
+- Update documentation for new features
+- Consider backward compatibility for configuration changes
 
 ## 📞 Support
 
