@@ -203,6 +203,24 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - Support for common mob types
 - Client-side only implementation
 
+### v1.1.0 - The Massive Update
+**New Features:**
+- **Spawner Group Finder**: Automatically identifies groups of spawners that can be activated simultaneously!
+  - Displays "Spawner Groups found" on the right side of the HUD.
+  - Shows the optimal activation coordinates (centroid) where effective farm stacking is possible.
+  - Lists individual spawners within each group.
+  - Sorts groups by size (largest groups first) to help you find the best farm locations instantly.
+- **Keybind Controls**:
+  - `O`: Toggle the entire Mod ON/OFF.
+  - `I`: Expand/Collapse the spawner lists (shows top 5 vs all).
+- **Performance Overhaul**:
+  - Completely rewrote the scanning engine to use "Loaded Chunks" instead of brute-force block checking.
+  - **Zero Lag Spikes**: 100% efficient CPU usage, even on low-end hardware.
+- **Visual Improvements**:
+  - Improved HUD readability with cleaner fonts and removal of unnecessary shadows.
+  - "Spawners found" header is now clearly visible with a separator line.
+  - Right-side HUD for group information to keep the screen organized.
+
 ---
 
 ## 🚨 Disclaimer
