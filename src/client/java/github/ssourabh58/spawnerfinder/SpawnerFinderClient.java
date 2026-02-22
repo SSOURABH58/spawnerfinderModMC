@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 // import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
-import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
 public class SpawnerFinderClient implements ClientModInitializer {
@@ -28,19 +27,15 @@ public class SpawnerFinderClient implements ClientModInitializer {
         HudRenderCallback.EVENT.register(renderer);
 
         // Register KeyBinding for Toggle
-        toggleKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        toggleKey = KeyBindingHelper.registerKeyBinding(VersionHelper.createKeyMapping(
                 "key.spawnerfinder.toggle", // Translation key
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_O, // Default key 'O'
-                KeyMapping.CATEGORY_GAMEPLAY // Category
+                GLFW.GLFW_KEY_O // Default key 'O'
         ));
 
         // Register KeyBinding for Expand List
-        expandKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        expandKey = KeyBindingHelper.registerKeyBinding(VersionHelper.createKeyMapping(
                 "key.spawnerfinder.expand", // Translation key
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_I, // Default key 'I'
-                KeyMapping.CATEGORY_GAMEPLAY // Category
+                GLFW.GLFW_KEY_I // Default key 'I'
         ));
 
         // Register Tick Handler
