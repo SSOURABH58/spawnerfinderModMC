@@ -32,7 +32,7 @@ public class SpawnerFinderClient implements ClientModInitializer {
                 "key.spawnerfinder.toggle", // Translation key
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_O, // Default key 'O'
-                KeyMapping.Category.GAMEPLAY // Category
+                KeyMapping.CATEGORY_GAMEPLAY // Category
         ));
 
         // Register KeyBinding for Expand List
@@ -40,7 +40,7 @@ public class SpawnerFinderClient implements ClientModInitializer {
                 "key.spawnerfinder.expand", // Translation key
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_I, // Default key 'I'
-                KeyMapping.Category.GAMEPLAY // Category
+                KeyMapping.CATEGORY_GAMEPLAY // Category
         ));
 
         // Register Tick Handler
