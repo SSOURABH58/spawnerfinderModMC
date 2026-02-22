@@ -4,7 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+// import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -22,7 +22,7 @@ public class SpawnerFinderClient implements ClientModInitializer {
 
         // Register the spawner overlay renderer - this renders bright highlights
         // through blocks
-        WorldRenderEvents.LAST.register(renderer);
+        // WorldRenderEvents.LAST.register(renderer);
 
         // Register the HUD renderer - this shows the closest 5 spawners list
         HudRenderCallback.EVENT.register(renderer);
@@ -32,7 +32,7 @@ public class SpawnerFinderClient implements ClientModInitializer {
                 "key.spawnerfinder.toggle", // Translation key
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_O, // Default key 'O'
-                "category.spawnerfinder" // Category
+                KeyMapping.Category.GAMEPLAY // Category
         ));
 
         // Register KeyBinding for Expand List
@@ -40,26 +40,29 @@ public class SpawnerFinderClient implements ClientModInitializer {
                 "key.spawnerfinder.expand", // Translation key
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_I, // Default key 'I'
-                "category.spawnerfinder" // Category
+                KeyMapping.Category.GAMEPLAY // Category
         ));
 
         // Register Tick Handler
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            SpawnerFinderConfig config = SpawnerFinderConfig.getInstance();
             while (toggleKey.consumeClick()) {
-                SpawnerRenderer.modEnabled = !SpawnerRenderer.modEnabled;
+                config.modEnabled = !config.modEnabled;
+                config.save();
                 if (client.player != null) {
                     client.player.displayClientMessage(
-                            Component.literal("Spawner Finder: " + (SpawnerRenderer.modEnabled ? "§aON" : "§cOFF")),
+                            Component.literal("Spawner Finder: " + (config.modEnabled ? "§aON" : "§cOFF")),
                             true);
                 }
             }
 
             while (expandKey.consumeClick()) {
-                SpawnerRenderer.expandedList = !SpawnerRenderer.expandedList;
+                config.expandedList = !config.expandedList;
+                config.save();
                 if (client.player != null) {
                     client.player.displayClientMessage(
                             Component.literal(
-                                    "Spawner List: " + (SpawnerRenderer.expandedList ? "§eExpanded" : "§7Compact")),
+                                    "Spawner List: " + (config.expandedList ? "§eExpanded" : "§7Compact")),
                             true);
                 }
             }

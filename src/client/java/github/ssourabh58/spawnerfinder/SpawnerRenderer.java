@@ -1,13 +1,12 @@
 package github.ssourabh58.spawnerfinder;
 
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+// import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+// import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -15,10 +14,15 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.entity.EntityType;
 import java.util.*;
 
-public class SpawnerRenderer implements WorldRenderEvents.Last, HudRenderCallback {
+public class SpawnerRenderer implements /* WorldRenderEvents.Last, */ HudRenderCallback {
 
-    public static boolean modEnabled = true;
-    public static boolean expandedList = false;
+    public static boolean modEnabled() {
+        return SpawnerFinderConfig.getInstance().modEnabled;
+    }
+
+    public static boolean expandedList() {
+        return SpawnerFinderConfig.getInstance().expandedList;
+    }
 
     private static final List<SpawnerInfo> foundSpawners = new ArrayList<>();
     private static final List<SpawnerGroup> foundGroups = new ArrayList<>(); // New list for groups
@@ -49,25 +53,27 @@ public class SpawnerRenderer implements WorldRenderEvents.Last, HudRenderCallbac
         }
     }
 
-    @Override
-    public void onLast(WorldRenderContext context) {
-        if (!modEnabled)
-            return;
-
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null)
-            return;
-
-        Level world = mc.level;
-        BlockPos playerPos = mc.player.blockPosition();
-
-        // Update spawner list periodically
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastScanTime > SCAN_INTERVAL) {
-            scanForSpawners(world, playerPos);
-            lastScanTime = currentTime;
-        }
-    }
+    /*
+     * @Override
+     * public void onLast(WorldRenderContext context) {
+     * if (!modEnabled)
+     * return;
+     * 
+     * Minecraft mc = Minecraft.getInstance();
+     * if (mc.level == null || mc.player == null)
+     * return;
+     * 
+     * Level world = mc.level;
+     * BlockPos playerPos = mc.player.blockPosition();
+     * 
+     * // Update spawner list periodically
+     * long currentTime = System.currentTimeMillis();
+     * if (currentTime - lastScanTime > SCAN_INTERVAL) {
+     * scanForSpawners(world, playerPos);
+     * lastScanTime = currentTime;
+     * }
+     * }
+     */
 
     private void scanForSpawners(Level world, BlockPos playerPos) {
         foundSpawners.clear();
@@ -254,8 +260,19 @@ public class SpawnerRenderer implements WorldRenderEvents.Last, HudRenderCallbac
     @Override
     public void onHudRender(GuiGraphics guiGraphics, net.minecraft.client.DeltaTracker deltaTracker) {
         Minecraft mc = Minecraft.getInstance();
-        if (!modEnabled || mc.player == null)
+        if (!modEnabled() || mc.player == null)
             return;
+
+        // MOVED SCANNING LOGIC HERE
+        Level world = mc.level;
+        BlockPos playerPos = mc.player.blockPosition();
+        if (world != null) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastScanTime > SCAN_INTERVAL) {
+                scanForSpawners(world, playerPos);
+                lastScanTime = currentTime;
+            }
+        }
 
         int lineHeight = 12;
 
@@ -270,7 +287,7 @@ public class SpawnerRenderer implements WorldRenderEvents.Last, HudRenderCallbac
         leftY += lineHeight + 2;
 
         if (!foundSpawners.isEmpty()) {
-            int count = expandedList ? foundSpawners.size() : Math.min(5, foundSpawners.size());
+            int count = expandedList() ? foundSpawners.size() : Math.min(5, foundSpawners.size());
             for (int i = 0; i < count; i++) {
                 SpawnerInfo spawner = foundSpawners.get(i);
                 String mobName = getMobDisplayName(spawner.entityType);
@@ -293,7 +310,7 @@ public class SpawnerRenderer implements WorldRenderEvents.Last, HudRenderCallbac
             guiGraphics.drawString(mc.font, "----------------", rightX, rightY, 0xFFAAAAAA, false);
             rightY += lineHeight + 2;
 
-            int groupCount = expandedList ? foundGroups.size() : Math.min(2, foundGroups.size());
+            int groupCount = expandedList() ? foundGroups.size() : Math.min(2, foundGroups.size());
 
             for (int i = 0; i < groupCount; i++) {
                 SpawnerGroup group = foundGroups.get(i);
