@@ -47,7 +47,7 @@ A client-side Minecraft mod that displays nearby mob spawners in your HUD with c
 1. **Install Fabric Loader** - Download from [FabricMC](https://fabricmc.net/use/)
 2. **Download Fabric API** - Get it from [Modrinth](https://modrinth.com/mod/fabric-api) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
 3. **Download SpawnerFinder** - Get the latest release from the releases page
-4. **Install the Mod** - Place `spawnerfinder-1.0.0.jar` in your `.minecraft/mods/` folder
+4. **Install the Mod** - Place `spawnerfinder-1.2.0.jar` in your `.minecraft/mods/` folder
 5. **Launch Minecraft** - Start the game with the Fabric profile
 
 ## 🎮 Usage
@@ -128,7 +128,7 @@ cd spawnerfinder
 ./gradlew build
 
 # Find the built JAR
-ls build/libs/spawnerfinder-1.0.0.jar
+ls build/libs/spawnerfinder-1.2.0.jar
 ```
 
 ## 📝 License
@@ -220,6 +220,11 @@ Contributions are welcome! Please feel free to submit a Pull Request.
   - Improved HUD readability with cleaner fonts and removal of unnecessary shadows.
   - "Spawners found" header is now clearly visible with a separator line.
   - Right-side HUD for group information to keep the screen organized.
+
+### v1.2.0
+- Updated to Minecraft 26.1 (Tiny Takeover update)
+- Ported to Java 25 compatibility
+- Migrated rendering logic to the new `HudElementRegistry` API
 
 ---
 
