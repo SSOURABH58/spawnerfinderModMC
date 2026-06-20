@@ -2,9 +2,9 @@ package github.ssourabh58.spawnerfinder;
 
 // import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 // import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -14,7 +14,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.entity.EntityType;
 import java.util.*;
 
-public class SpawnerRenderer implements /* WorldRenderEvents.Last, */ HudRenderCallback {
+public class SpawnerRenderer implements HudElement {
 
     public static boolean modEnabled() {
         return SpawnerFinderConfig.getInstance().modEnabled;
@@ -258,7 +258,7 @@ public class SpawnerRenderer implements /* WorldRenderEvents.Last, */ HudRenderC
     }
 
     @Override
-    public void onHudRender(GuiGraphics guiGraphics, net.minecraft.client.DeltaTracker deltaTracker) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, net.minecraft.client.DeltaTracker deltaTracker) {
         Minecraft mc = Minecraft.getInstance();
         if (!modEnabled() || mc.player == null)
             return;
@@ -281,9 +281,9 @@ public class SpawnerRenderer implements /* WorldRenderEvents.Last, */ HudRenderC
         int leftY = 10;
 
         String header = String.format("§6§lSpawners found: %d", foundSpawners.size());
-        guiGraphics.drawString(mc.font, header, leftX, leftY, 0xFFFFFFFF, false);
+        guiGraphics.text(mc.font, header, leftX, leftY, 0xFFFFFFFF, false);
         leftY += lineHeight;
-        guiGraphics.drawString(mc.font, "----------------", leftX, leftY, 0xFFAAAAAA, false);
+        guiGraphics.text(mc.font, "----------------", leftX, leftY, 0xFFAAAAAA, false);
         leftY += lineHeight + 2;
 
         if (!foundSpawners.isEmpty()) {
@@ -294,7 +294,7 @@ public class SpawnerRenderer implements /* WorldRenderEvents.Last, */ HudRenderC
                 int color = getColorForMobType(spawner.entityType);
                 String text = String.format("%s: %d, %d, %d (%.1fm)", mobName, spawner.pos.getX(), spawner.pos.getY(),
                         spawner.pos.getZ(), spawner.distance);
-                guiGraphics.drawString(mc.font, text, leftX, leftY, color, false);
+                guiGraphics.text(mc.font, text, leftX, leftY, color, false);
                 leftY += lineHeight;
             }
         }
@@ -305,9 +305,9 @@ public class SpawnerRenderer implements /* WorldRenderEvents.Last, */ HudRenderC
             int rightY = 10;
 
             String groupHeader = String.format("§b§lSpawner Groups found: %d", foundGroups.size());
-            guiGraphics.drawString(mc.font, groupHeader, rightX, rightY, 0xFFFFFFFF, false);
+            guiGraphics.text(mc.font, groupHeader, rightX, rightY, 0xFFFFFFFF, false);
             rightY += lineHeight;
-            guiGraphics.drawString(mc.font, "----------------", rightX, rightY, 0xFFAAAAAA, false);
+            guiGraphics.text(mc.font, "----------------", rightX, rightY, 0xFFAAAAAA, false);
             rightY += lineHeight + 2;
 
             int groupCount = expandedList() ? foundGroups.size() : Math.min(2, foundGroups.size());
@@ -315,25 +315,25 @@ public class SpawnerRenderer implements /* WorldRenderEvents.Last, */ HudRenderC
             for (int i = 0; i < groupCount; i++) {
                 SpawnerGroup group = foundGroups.get(i);
                 String groupTitle = String.format("§eGroup of: %d", group.spawners.size());
-                guiGraphics.drawString(mc.font, groupTitle, rightX, rightY, 0xFFFFFF00, false);
+                guiGraphics.text(mc.font, groupTitle, rightX, rightY, 0xFFFFFF00, false);
                 rightY += lineHeight;
 
                 String activationText = String.format("§7Activate: %d, %d, %d (%.1fm)",
                         group.activationPos.getX(), group.activationPos.getY(), group.activationPos.getZ(),
                         group.distanceToPlayer);
-                guiGraphics.drawString(mc.font, activationText, rightX, rightY, 0xFFCCCCCC, false);
+                guiGraphics.text(mc.font, activationText, rightX, rightY, 0xFFCCCCCC, false);
                 rightY += lineHeight;
 
                 for (SpawnerInfo spawner : group.spawners) {
                     String mob = getMobDisplayName(spawner.entityType);
                     String spawnerText = String.format("  %s: %d, %d, %d", mob, spawner.pos.getX(), spawner.pos.getY(),
                             spawner.pos.getZ());
-                    guiGraphics.drawString(mc.font, spawnerText, rightX, rightY, getColorForMobType(spawner.entityType),
+                    guiGraphics.text(mc.font, spawnerText, rightX, rightY, getColorForMobType(spawner.entityType),
                             false);
                     rightY += lineHeight;
                 }
 
-                guiGraphics.drawString(mc.font, "-------------", rightX, rightY, 0xFFAAAAAA, false);
+                guiGraphics.text(mc.font, "-------------", rightX, rightY, 0xFFAAAAAA, false);
                 rightY += lineHeight;
             }
         }

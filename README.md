@@ -37,10 +37,10 @@ A client-side Minecraft mod that displays nearby mob spawners in your HUD with c
 
 ## 📋 Requirements
 
-- **Minecraft**: 1.21.8
+- **Minecraft**: 26.1
 - **Fabric Loader**: 0.17.3 or higher
-- **Fabric API**: 0.136.1+1.21.8 or higher
-- **Java**: 21 or higher
+- **Fabric API**: 0.144.1+26.1 or higher
+- **Java**: 25 or higher
 
 ## 🚀 Installation
 
