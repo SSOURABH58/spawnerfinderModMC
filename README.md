@@ -1,20 +1,34 @@
 # SpawnerFinder
 
+[![Minecraft Version](https://img.shields.io/badge/Minecraft-26.1-brightgreen.svg)](https://minecraft.net)
+[![Mod Version](https://img.shields.io/badge/Version-2.0.0-blue.svg)](https://github.com/SSOURABH58/spawnerfinderModMC/releases)
+
 A client-side Minecraft mod that displays nearby mob spawners in your HUD with color-coded information showing spawner type, coordinates, and distance to help you locate dungeons efficiently.
+
+> [!NOTE]
+> **Exciting New Update for Minecraft 26.1!** 🚀
+> We are thrilled to announce the release of **SpawnerFinder v2.0.0** built specifically for Minecraft 26.1! This update brings a complete UI overhaul, a powerful multi-spawner grouping engine, smart in-game search functionality with modded spawner support, and massive performance improvements to keep your frame rates high. Read more about the new features below!
 
 ## 📸 Screenshots
 
-![SpawnerFinder Sample](sampleimage.png)
+![SpawnerFinder Sample](https://raw.githubusercontent.com/SSOURABH58/spawnerfinderModMC/refs/heads/main/sampleImage.png)
 *SpawnerFinder HUD displaying nearby mob spawners with coordinates and distances*
 
 ## 🎯 Features
 
 ### Core Functionality
-- **Real-time Spawner Detection** - Automatically scans for mob spawners within 128 blocks of your position
-- **Color-Coded Display** - Each mob type has a unique color for instant recognition
-- **Distance Tracking** - Shows exact distance to each spawner in meters
-- **Coordinate Display** - Provides precise X, Y, Z coordinates for easy navigation
-- **HUD Integration** - Clean, non-intrusive overlay that shows the 5 closest spawners
+- **Real-time Spawner Detection** - Automatically scans for mob spawners within a 160-block radius of your position.
+- **Color-Coded Display** - Each mob type has a unique color for instant recognition.
+- **Distance Tracking** - Shows exact distance to each spawner in meters.
+- **Coordinate Display** - Provides precise X, Y, Z coordinates for easy navigation.
+- **High-Fidelity HUD Overlay** - Clean overlay with transparent background boxes to keep stats legible in all environments.
+- **Mob Head / Spawn Egg Icons** - Visual icon renders next to each spawner type for intuitive reading.
+
+### Advanced Features (New in v2.0.0)
+- **Interactive Search GUI** - Open with the `U` key to filter spawners in real-time. Features search suggestions with TAB cycling.
+- **Custom Modpack & Server Support** - Scans the game's registry dynamically to identify modded/non-vanilla spawners.
+- **Spawner Group Finder** - Automatically detects spawners within activation range of each other (16 blocks) and calculates the exact coordinate centroid where you should stand to run multiple spawners at the same time.
+- **Screen-Height Expansion** - Toggle between compact (top 5) and expanded list views using the `I` key to see everything in range.
 
 ### Supported Mob Types
 | Mob Type | Color | Hex Code |
@@ -38,7 +52,7 @@ A client-side Minecraft mod that displays nearby mob spawners in your HUD with c
 ## 📋 Requirements
 
 - **Minecraft**: 26.1
-- **Fabric Loader**: 0.17.3 or higher
+- **Fabric Loader**: 0.18.4 or higher
 - **Fabric API**: 0.144.1+26.1 or higher
 - **Java**: 25 or higher
 
@@ -47,18 +61,22 @@ A client-side Minecraft mod that displays nearby mob spawners in your HUD with c
 1. **Install Fabric Loader** - Download from [FabricMC](https://fabricmc.net/use/)
 2. **Download Fabric API** - Get it from [Modrinth](https://modrinth.com/mod/fabric-api) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
 3. **Download SpawnerFinder** - Get the latest release from the releases page
-4. **Install the Mod** - Place `spawnerfinder-1.2.0.jar` in your `.minecraft/mods/` folder
+4. **Install the Mod** - Place `spawnerfinder-2.0.0.jar` in your `.minecraft/mods/` folder
 5. **Launch Minecraft** - Start the game with the Fabric profile
 
 ## 🎮 Usage
 
+### Keybindings & Controls
+You can customize these controls in standard Minecraft settings:
+- **`O`** - Toggle the entire SpawnerFinder HUD ON/OFF.
+- **`I`** - Toggle Spawner List between **Compact** (shows top 5 spawners) and **Expanded** (shows all spawners in loaded chunks, utilizing the full screen height).
+- **`U`** - Open the **Spawner Search & Settings Screen**.
+
 ### In-Game Display
 Once installed, the mod automatically starts working:
-
-1. **HUD Location** - Spawner information appears in the top-left corner of your screen
-2. **Automatic Updates** - The list refreshes every 2 seconds as you move around
-3. **Distance Sorting** - Spawners are automatically sorted by distance (closest first)
-4. **Format** - Each entry shows: `Mob Type: X, Y, Z (Distance)`
+1. **Left Panel (HUD)** - Shows spawners found sorted by distance (closest first) with their specific mob icon, coordinate, and distance format: `Mob Type: X, Y, Z (Distance)`.
+2. **Right Panel (HUD)** - Shows groups of spawners found within activation proximity, along with the calculated coordinate centroid labeled `Activate: X, Y, Z`.
+3. **Automatic Scanning** - Scans loaded chunks every 2 seconds asynchronously, ensuring zero performance drops.
 
 ### Example Display
 ```
@@ -96,9 +114,10 @@ While this mod is technically undetectable:
 ## 🔧 Technical Details
 
 ### Performance
-- **Efficient Scanning** - Only scans every 2 seconds to minimize performance impact
-- **Optimized Range** - 128-block radius provides good coverage without excessive computation
-- **Memory Friendly** - Lightweight implementation with minimal memory usage
+- **Chunk-Based Scanning** - Scans loaded chunk data instead of brute forcing block coordinates, giving massive FPS gains.
+- **Optimized Cycle** - Limits chunk scans to every 2 seconds to maintain 100% stable performance.
+- **Optimized Range** - Scans up to a 10-chunk radius (approx. 160 blocks) efficiently.
+- **Memory Friendly** - Lightweight collections and dynamic registry lookups ensure a negligible memory footprint.
 
 ### Compatibility
 - **Fabric Ecosystem** - Built using standard Fabric APIs
@@ -128,7 +147,7 @@ cd spawnerfinder
 ./gradlew build
 
 # Find the built JAR
-ls build/libs/spawnerfinder-1.2.0.jar
+ls build/libs/spawnerfinder-2.0.0.jar
 ```
 
 ## 📝 License
@@ -142,7 +161,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ### 📋 TODO List for Contributors
 
 #### High Priority Features
-- [ ] **Toggle Button with Keybind** - Add configurable hotkey to enable/disable the HUD display
+- [x] **Toggle Button with Keybind** - Add configurable hotkey to enable/disable the HUD display
 - [ ] **Settings GUI** - Create in-game configuration menu accessible via keybind or mod menu
 - [ ] **Scrollable Spawner List** - Expand beyond 5 spawners with scrollable interface
 
@@ -159,17 +178,16 @@ Contributions are welcome! Please feel free to submit a Pull Request.
   - [ ] Custom distance units (blocks/meters)
 
 #### Advanced Features
-- [ ] **Multi-Mod Spawner Detection** - Support for modded spawners and custom mob types
-- [ ] **Spawner Groups** - Categorize spawners by biome, dimension, or custom groups
+- [x] **Multi-Mod Spawner Detection** - Support for modded spawners and custom mob types (New in v2.0.0)
+- [x] **Spawner Groups** - Find multiple spawners for simultaneous farming (New in v2.0.0)
 - [ ] **Enhanced Filtering**
-  - [ ] Filter by mob type
+  - [x] Filter by mob type (New in v2.0.0 via Search UI)
   - [ ] Filter by distance range
   - [ ] Blacklist specific spawner types
-- [ ] **Export/Import** - Save and share spawner locations
 
 #### Technical Improvements
-- [ ] **Performance Optimization** - Reduce scanning overhead for large areas
-- [ ] **Memory Management** - Optimize spawner data storage and cleanup
+- [x] **Performance Optimization** - Scan loaded chunks to eliminate lag spikes (New in v2.0.0)
+- [x] **Memory Management** - Optimize spawner data storage and cleanup
 - [ ] **Compatibility Layer** - Better integration with other client-side mods
 
 #### UI/UX Enhancements
@@ -225,6 +243,26 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - Updated to Minecraft 26.1 (Tiny Takeover update)
 - Ported to Java 25 compatibility
 - Migrated rendering logic to the new `HudElementRegistry` API
+
+### v2.0.0 - The Ultimate Search & UI Update (Minecraft 26.1)
+**New Features & Enhancements:**
+- **Refined HUD UI**:
+  - Dark transparent background panels behind spawner lists for readability.
+  - Interactive screen height expansion (toggle between Compact and Expanded view using the `I` key).
+  - High-fidelity mob icon rendering (using custom mob heads or spawn eggs) right next to each entry on the HUD and in the search screen.
+- **Advanced Grouping System**:
+  - Automatically identifies groups of spawners located within activation proximity (16-block radius).
+  - Calculates the exact coordinate centroid where players should stand to activate and run multiple spawners simultaneously.
+  - Displays groups on the right side of the HUD, sorted by group size (largest first) and distance.
+- **Dynamic Search & Filtering**:
+  - Brand-new interactive search screen (default keybind: `U`).
+  - Real-time search filter by typing mob names to narrow down spawners on the HUD.
+  - TAB-completion support to cycle through available mob names quickly in the search box.
+  - Complete support for non-vanilla and modded spawners (dynamically loaded from registry).
+  - "Vanilla Only" filter toggle to easily switch between base game and custom modded mobs.
+- **Significant Performance Tuning**:
+  - Scanning engine uses chunk loading tracking (`LevelChunk`) rather than brute-force block inspection, resulting in zero lag spikes and high FPS.
+  - Scanning interval optimized to 2 seconds to run smoothly even on lower-end systems.
 
 ---
 
