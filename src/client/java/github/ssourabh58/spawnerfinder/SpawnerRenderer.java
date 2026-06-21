@@ -1,7 +1,5 @@
 package github.ssourabh58.spawnerfinder;
 
-// import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-// import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -12,9 +10,17 @@ import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import java.util.*;
 
 public class SpawnerRenderer implements HudElement {
+
+    public static String searchQuery = "";
+
+    public SpawnerRenderer() {
+        searchQuery = SpawnerFinderConfig.getInstance().searchQuery;
+    }
 
     public static boolean modEnabled() {
         return SpawnerFinderConfig.getInstance().modEnabled;
@@ -28,6 +34,10 @@ public class SpawnerRenderer implements HudElement {
     private static final List<SpawnerGroup> foundGroups = new ArrayList<>(); // New list for groups
     private static long lastScanTime = 0;
     private static final long SCAN_INTERVAL = 2000; // Scan every 2 seconds
+
+    public static List<SpawnerInfo> getFoundSpawners() {
+        return foundSpawners;
+    }
 
     public static class SpawnerInfo {
         public final BlockPos pos;
@@ -53,28 +63,6 @@ public class SpawnerRenderer implements HudElement {
         }
     }
 
-    /*
-     * @Override
-     * public void onLast(WorldRenderContext context) {
-     * if (!modEnabled)
-     * return;
-     * 
-     * Minecraft mc = Minecraft.getInstance();
-     * if (mc.level == null || mc.player == null)
-     * return;
-     * 
-     * Level world = mc.level;
-     * BlockPos playerPos = mc.player.blockPosition();
-     * 
-     * // Update spawner list periodically
-     * long currentTime = System.currentTimeMillis();
-     * if (currentTime - lastScanTime > SCAN_INTERVAL) {
-     * scanForSpawners(world, playerPos);
-     * lastScanTime = currentTime;
-     * }
-     * }
-     */
-
     private void scanForSpawners(Level world, BlockPos playerPos) {
         foundSpawners.clear();
         int chunkRadius = 10; // Approx 160 blocks radius
@@ -85,7 +73,6 @@ public class SpawnerRenderer implements HudElement {
 
         for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
             for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
-                // Get chunk only if loaded (false arg) - using ChunkStatus.FULL to be precise
                 try {
                     var chunkAccess = world.getChunk(playerChunkX + dx, playerChunkZ + dz, ChunkStatus.FULL, false);
                     if (chunkAccess instanceof LevelChunk chunk) {
@@ -120,19 +107,15 @@ public class SpawnerRenderer implements HudElement {
 
         List<List<SpawnerInfo>> potentialGroups = new ArrayList<>();
 
-        // Greedy approach: For each spawner, try to build the largest valid group
-        // including it
         for (int i = 0; i < foundSpawners.size(); i++) {
             List<SpawnerInfo> currentGroup = new ArrayList<>();
             currentGroup.add(foundSpawners.get(i));
 
-            // Try adding all other spawners
             for (int j = 0; j < foundSpawners.size(); j++) {
                 if (i == j)
                     continue;
                 SpawnerInfo candidate = foundSpawners.get(j);
 
-                // Add temporally to check validity
                 List<SpawnerInfo> testList = new ArrayList<>(currentGroup);
                 testList.add(candidate);
 
@@ -146,26 +129,16 @@ public class SpawnerRenderer implements HudElement {
             }
         }
 
-        // Filter valid unique maximal groups
         for (List<SpawnerInfo> groupList : potentialGroups) {
-            // Check if this group is a subset of another already added group
             boolean isSubset = false;
             for (SpawnerGroup existing : foundGroups) {
                 if (existing.spawners.containsAll(groupList)) {
                     isSubset = true;
                     break;
                 }
-                // Also check if we should replace a smaller subset
-                if (groupList.containsAll(existing.spawners)) {
-                    // The new one is bigger, but we handle that by just adding and filtering later
-                    // or relying on order?
-                    // Let's just avoid adding exact duplicates or subsets.
-                }
             }
 
             if (!isSubset) {
-                // Check if any existing group is a subset of THIS new group, if so, remove the
-                // smaller one
                 foundGroups.removeIf(existing -> groupList.containsAll(existing.spawners));
 
                 BlockPos activationSpot = getValidActivationSpot(groupList);
@@ -184,12 +157,10 @@ public class SpawnerRenderer implements HudElement {
         });
     }
 
-    // Returns a valid BlockPos where all spawners are <= 16 blocks away, or null
     private BlockPos getValidActivationSpot(List<SpawnerInfo> list) {
         if (list.isEmpty())
             return null;
 
-        // Calculate centroid
         double x = 0, y = 0, z = 0;
         for (SpawnerInfo s : list) {
             x += s.pos.getX();
@@ -202,7 +173,6 @@ public class SpawnerRenderer implements HudElement {
 
         BlockPos centroid = new BlockPos((int) x, (int) y, (int) z);
 
-        // Verify centroid is within range of ALL spawners
         for (SpawnerInfo s : list) {
             if (Math.sqrt(centroid.distSqr(s.pos)) > 16.0) {
                 return null;
@@ -221,7 +191,6 @@ public class SpawnerRenderer implements HudElement {
     }
 
     private int getColorForMobType(EntityType<?> entityType) {
-        // Return packed ARGB color values
         if (entityType == EntityType.SKELETON)
             return 0xFFFFFFFF;
         if (entityType == EntityType.ZOMBIE)
@@ -239,7 +208,7 @@ public class SpawnerRenderer implements HudElement {
         return 0xFFFF00FF;
     }
 
-    private String getMobDisplayName(EntityType<?> entityType) {
+    public static String getMobDisplayName(EntityType<?> entityType) {
         if (entityType == EntityType.SKELETON)
             return "Skeleton";
         if (entityType == EntityType.ZOMBIE)
@@ -257,13 +226,34 @@ public class SpawnerRenderer implements HudElement {
         return entityType.getDescription().getString();
     }
 
+    public static net.minecraft.world.item.Item getIconItem(EntityType<?> entityType) {
+        if (entityType == EntityType.SKELETON) return Items.SKELETON_SKULL;
+        if (entityType == EntityType.ZOMBIE) return Items.ZOMBIE_HEAD;
+        if (entityType == EntityType.SPIDER) return Items.SPIDER_SPAWN_EGG;
+        if (entityType == EntityType.CAVE_SPIDER) return Items.CAVE_SPIDER_SPAWN_EGG;
+        if (entityType == EntityType.MAGMA_CUBE) return Items.MAGMA_CUBE_SPAWN_EGG;
+        if (entityType == EntityType.BLAZE) return Items.BLAZE_SPAWN_EGG;
+        if (entityType == EntityType.SILVERFISH) return Items.SILVERFISH_SPAWN_EGG;
+        return Items.SPAWNER;
+    }
+
+    public static net.minecraft.world.item.Item getIconItemByName(String name) {
+        if ("Skeleton".equalsIgnoreCase(name)) return Items.SKELETON_SKULL;
+        if ("Zombie".equalsIgnoreCase(name)) return Items.ZOMBIE_HEAD;
+        if ("Spider".equalsIgnoreCase(name)) return Items.SPIDER_SPAWN_EGG;
+        if ("Cave Spider".equalsIgnoreCase(name)) return Items.CAVE_SPIDER_SPAWN_EGG;
+        if ("Magma Cube".equalsIgnoreCase(name)) return Items.MAGMA_CUBE_SPAWN_EGG;
+        if ("Blaze".equalsIgnoreCase(name)) return Items.BLAZE_SPAWN_EGG;
+        if ("Silverfish".equalsIgnoreCase(name)) return Items.SILVERFISH_SPAWN_EGG;
+        return Items.SPAWNER;
+    }
+
     @Override
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, net.minecraft.client.DeltaTracker deltaTracker) {
         Minecraft mc = Minecraft.getInstance();
         if (!modEnabled() || mc.player == null)
             return;
 
-        // MOVED SCANNING LOGIC HERE
         Level world = mc.level;
         BlockPos playerPos = mc.player.blockPosition();
         if (world != null) {
@@ -274,67 +264,129 @@ public class SpawnerRenderer implements HudElement {
             }
         }
 
-        int lineHeight = 12;
+        // Apply filtering
+        List<SpawnerInfo> displayedSpawners = new ArrayList<>();
+        for (SpawnerInfo s : foundSpawners) {
+            if (searchQuery.isEmpty() || getMobDisplayName(s.entityType).toLowerCase().contains(searchQuery.toLowerCase())) {
+                displayedSpawners.add(s);
+            }
+        }
+
+        List<SpawnerGroup> displayedGroups = new ArrayList<>();
+        for (SpawnerGroup g : foundGroups) {
+            boolean matches = false;
+            for (SpawnerInfo s : g.spawners) {
+                if (searchQuery.isEmpty() || getMobDisplayName(s.entityType).toLowerCase().contains(searchQuery.toLowerCase())) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (matches) {
+                displayedGroups.add(g);
+            }
+        }
+
+        int guiWidth = mc.getWindow().getGuiScaledWidth();
+        int guiHeight = mc.getWindow().getGuiScaledHeight();
+
+        // --- Top Center Search Selection ---
+        if (!searchQuery.isEmpty()) {
+            guiGraphics.centeredText(mc.font, "Search selected: " + searchQuery, guiWidth / 2, 10, 0xFFFFAA00);
+        }
 
         // --- Left Side: Found Spawners List ---
         int leftX = 10;
         int leftY = 10;
+        int leftWidth = 240;
+        
+        // Calculate background height for left menu
+        int leftBoxHeight = expandedList() ? (guiHeight - 10) : 124;
+        
+        // Draw background box
+        guiGraphics.fill(leftX - 5, leftY - 5, leftX - 5 + leftWidth, leftY - 5 + leftBoxHeight, 0x77000000);
 
-        String header = String.format("§6§lSpawners found: %d", foundSpawners.size());
+        String header = String.format("§6§lSpawners found: %d", displayedSpawners.size());
         guiGraphics.text(mc.font, header, leftX, leftY, 0xFFFFFFFF, false);
-        leftY += lineHeight;
+        leftY += 12;
         guiGraphics.text(mc.font, "----------------", leftX, leftY, 0xFFAAAAAA, false);
-        leftY += lineHeight + 2;
+        leftY += 14;
 
-        if (!foundSpawners.isEmpty()) {
-            int count = expandedList() ? foundSpawners.size() : Math.min(5, foundSpawners.size());
+        if (!displayedSpawners.isEmpty()) {
+            int count = expandedList() ? displayedSpawners.size() : Math.min(5, displayedSpawners.size());
             for (int i = 0; i < count; i++) {
-                SpawnerInfo spawner = foundSpawners.get(i);
+                SpawnerInfo spawner = displayedSpawners.get(i);
                 String mobName = getMobDisplayName(spawner.entityType);
                 int color = getColorForMobType(spawner.entityType);
                 String text = String.format("%s: %d, %d, %d (%.1fm)", mobName, spawner.pos.getX(), spawner.pos.getY(),
                         spawner.pos.getZ(), spawner.distance);
-                guiGraphics.text(mc.font, text, leftX, leftY, color, false);
-                leftY += lineHeight;
+                
+                // Draw Icon
+                guiGraphics.item(new ItemStack(getIconItem(spawner.entityType)), leftX, leftY);
+                
+                // Draw Text next to icon
+                guiGraphics.text(mc.font, text, leftX + 20, leftY + 4, color, false);
+                leftY += 18;
             }
         }
 
         // --- Right Side: Spawner Groups ---
-        if (!foundGroups.isEmpty()) {
-            int rightX = mc.getWindow().getGuiScaledWidth() - 200; // Align to right, with some padding
+        if (!displayedGroups.isEmpty()) {
+            int rightWidth = 240;
+            int rightX = guiWidth - rightWidth - 5;
             int rightY = 10;
+            
+            // Calculate background height for right menu
+            int rightBoxHeight = expandedList() ? (guiHeight - 10) : 130;
+            
+            // Draw background box
+            guiGraphics.fill(rightX - 5, rightY - 5, rightX - 5 + rightWidth, rightY - 5 + rightBoxHeight, 0x77000000);
 
-            String groupHeader = String.format("§b§lSpawner Groups found: %d", foundGroups.size());
+            String groupHeader = String.format("§b§lSpawner Groups found: %d", displayedGroups.size());
             guiGraphics.text(mc.font, groupHeader, rightX, rightY, 0xFFFFFFFF, false);
-            rightY += lineHeight;
+            rightY += 12;
             guiGraphics.text(mc.font, "----------------", rightX, rightY, 0xFFAAAAAA, false);
-            rightY += lineHeight + 2;
+            rightY += 14;
 
-            int groupCount = expandedList() ? foundGroups.size() : Math.min(2, foundGroups.size());
+            int detailLines = 0;
+            int maxDetailLines = expandedList() ? Integer.MAX_VALUE : 5;
 
-            for (int i = 0; i < groupCount; i++) {
-                SpawnerGroup group = foundGroups.get(i);
+            for (SpawnerGroup group : displayedGroups) {
+                if (detailLines >= maxDetailLines) break;
+
                 String groupTitle = String.format("§eGroup of: %d", group.spawners.size());
                 guiGraphics.text(mc.font, groupTitle, rightX, rightY, 0xFFFFFF00, false);
-                rightY += lineHeight;
+                rightY += 12;
+                detailLines++;
+                if (detailLines >= maxDetailLines) break;
 
                 String activationText = String.format("§7Activate: %d, %d, %d (%.1fm)",
                         group.activationPos.getX(), group.activationPos.getY(), group.activationPos.getZ(),
                         group.distanceToPlayer);
                 guiGraphics.text(mc.font, activationText, rightX, rightY, 0xFFCCCCCC, false);
-                rightY += lineHeight;
+                rightY += 12;
+                detailLines++;
+                if (detailLines >= maxDetailLines) break;
 
                 for (SpawnerInfo spawner : group.spawners) {
                     String mob = getMobDisplayName(spawner.entityType);
                     String spawnerText = String.format("  %s: %d, %d, %d", mob, spawner.pos.getX(), spawner.pos.getY(),
                             spawner.pos.getZ());
-                    guiGraphics.text(mc.font, spawnerText, rightX, rightY, getColorForMobType(spawner.entityType),
-                            false);
-                    rightY += lineHeight;
+                    
+                    // Draw icon inside groups
+                    guiGraphics.item(new ItemStack(getIconItem(spawner.entityType)), rightX + 5, rightY);
+                    
+                    // Draw text next to icon
+                    guiGraphics.text(mc.font, spawnerText, rightX + 25, rightY + 4, getColorForMobType(spawner.entityType), false);
+                    rightY += 18;
+                    detailLines++;
+                    if (detailLines >= maxDetailLines) break;
                 }
 
+                if (detailLines >= maxDetailLines) break;
+                
                 guiGraphics.text(mc.font, "-------------", rightX, rightY, 0xFFAAAAAA, false);
-                rightY += lineHeight;
+                rightY += 12;
+                detailLines++;
             }
         }
     }

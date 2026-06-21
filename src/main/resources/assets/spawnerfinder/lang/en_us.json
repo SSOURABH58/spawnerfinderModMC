@@ -1,5 +1,7 @@
 {
   "key.spawnerfinder.toggle": "Toggle Spawner Finder",
   "key.spawnerfinder.expand": "Expand Spawner List",
-  "category.spawnerfinder": "Spawner Finder"
+  "key.spawnerfinder.search": "Search Mob Spawner",
+  "category.spawnerfinder": "Spawner Finder",
+  "key.category.spawnerfinder.category": "Spawner Finder"
 }

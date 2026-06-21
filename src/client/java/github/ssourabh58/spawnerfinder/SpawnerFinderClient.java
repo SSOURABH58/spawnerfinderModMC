@@ -14,6 +14,7 @@ public class SpawnerFinderClient implements ClientModInitializer {
 
     private static KeyMapping toggleKey;
     private static KeyMapping expandKey;
+    private static KeyMapping searchKey;
 
     @Override
     public void onInitializeClient() {
@@ -42,6 +43,12 @@ public class SpawnerFinderClient implements ClientModInitializer {
                 GLFW.GLFW_KEY_I // Default key 'I'
         ));
 
+        // Register KeyMapping for Search Screen
+        searchKey = KeyMappingHelper.registerKeyMapping(VersionHelper.createKeyMapping(
+                "key.spawnerfinder.search", // Translation key
+                GLFW.GLFW_KEY_P // Default key 'P'
+        ));
+
         // Register Tick Handler
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             SpawnerFinderConfig config = SpawnerFinderConfig.getInstance();
@@ -62,6 +69,10 @@ public class SpawnerFinderClient implements ClientModInitializer {
                             Component.literal(
                                     "Spawner List: " + (config.expandedList ? "§eExpanded" : "§7Compact")));
                 }
+            }
+
+            while (searchKey.consumeClick()) {
+                client.setScreen(new SpawnerSearchScreen());
             }
         });
     }
