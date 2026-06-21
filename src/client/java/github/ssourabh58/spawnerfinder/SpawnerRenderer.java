@@ -10,9 +10,14 @@ import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.core.Holder;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import java.util.*;
+
 
 public class SpawnerRenderer implements HudElement {
 
@@ -28,6 +33,58 @@ public class SpawnerRenderer implements HudElement {
 
     public static boolean expandedList() {
         return SpawnerFinderConfig.getInstance().expandedList;
+    }
+
+    // ponytail: Dynamically discover registered mobs rather than hardcoding.
+    private static boolean mobsInitialized = false;
+    private static final Map<String, EntityType<?>> mobByName = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private static final List<EntityType<?>> allMobs = new ArrayList<>();
+
+    public static synchronized void initializeMobs() {
+        if (mobsInitialized) return;
+        mobByName.clear();
+        allMobs.clear();
+        int count = 0;
+        for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
+            if (type.getCategory() != MobCategory.MISC || SpawnEggItem.byId(type).isPresent()) {
+                String displayName = getMobDisplayName(type);
+                mobByName.put(displayName, type);
+                allMobs.add(type);
+                count++;
+            }
+        }
+        SpawnerFinder.LOGGER.info("SpawnerFinder: Auto-detected {} mobs on load.", count);
+        mobsInitialized = true;
+    }
+
+    public static List<EntityType<?>> getAllMobs() {
+        if (!mobsInitialized) {
+            initializeMobs();
+        }
+        return allMobs;
+    }
+
+    public static Map<String, EntityType<?>> getMobByNameMap() {
+        if (!mobsInitialized) {
+            initializeMobs();
+        }
+        return mobByName;
+    }
+
+    public static boolean isVanilla(EntityType<?> type) {
+        if (type == null) return false;
+        net.minecraft.resources.Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
+        return id != null && "minecraft".equals(id.getNamespace());
+    }
+
+    public static boolean isVanillaSpawnerMob(EntityType<?> type) {
+        return type == EntityType.ZOMBIE ||
+               type == EntityType.SKELETON ||
+               type == EntityType.SPIDER ||
+               type == EntityType.CAVE_SPIDER ||
+               type == EntityType.MAGMA_CUBE ||
+               type == EntityType.BLAZE ||
+               type == EntityType.SILVERFISH;
     }
 
     private static final List<SpawnerInfo> foundSpawners = new ArrayList<>();
@@ -226,27 +283,17 @@ public class SpawnerRenderer implements HudElement {
         return entityType.getDescription().getString();
     }
 
+    // ponytail: Dynamically resolve spawn egg item or fallback to spawner
     public static net.minecraft.world.item.Item getIconItem(EntityType<?> entityType) {
-        if (entityType == EntityType.SKELETON) return Items.SKELETON_SKULL;
-        if (entityType == EntityType.ZOMBIE) return Items.ZOMBIE_HEAD;
-        if (entityType == EntityType.SPIDER) return Items.SPIDER_SPAWN_EGG;
-        if (entityType == EntityType.CAVE_SPIDER) return Items.CAVE_SPIDER_SPAWN_EGG;
-        if (entityType == EntityType.MAGMA_CUBE) return Items.MAGMA_CUBE_SPAWN_EGG;
-        if (entityType == EntityType.BLAZE) return Items.BLAZE_SPAWN_EGG;
-        if (entityType == EntityType.SILVERFISH) return Items.SILVERFISH_SPAWN_EGG;
-        return Items.SPAWNER;
+        if (entityType == null) return Items.SPAWNER;
+        return SpawnEggItem.byId(entityType).map(Holder::value).orElse(Items.SPAWNER);
     }
 
     public static net.minecraft.world.item.Item getIconItemByName(String name) {
-        if ("Skeleton".equalsIgnoreCase(name)) return Items.SKELETON_SKULL;
-        if ("Zombie".equalsIgnoreCase(name)) return Items.ZOMBIE_HEAD;
-        if ("Spider".equalsIgnoreCase(name)) return Items.SPIDER_SPAWN_EGG;
-        if ("Cave Spider".equalsIgnoreCase(name)) return Items.CAVE_SPIDER_SPAWN_EGG;
-        if ("Magma Cube".equalsIgnoreCase(name)) return Items.MAGMA_CUBE_SPAWN_EGG;
-        if ("Blaze".equalsIgnoreCase(name)) return Items.BLAZE_SPAWN_EGG;
-        if ("Silverfish".equalsIgnoreCase(name)) return Items.SILVERFISH_SPAWN_EGG;
-        return Items.SPAWNER;
+        EntityType<?> type = getMobByNameMap().get(name);
+        return getIconItem(type);
     }
+
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, net.minecraft.client.DeltaTracker deltaTracker) {
@@ -266,7 +313,11 @@ public class SpawnerRenderer implements HudElement {
 
         // Apply filtering
         List<SpawnerInfo> displayedSpawners = new ArrayList<>();
+        boolean vanillaOnly = SpawnerFinderConfig.getInstance().vanillaOnly;
         for (SpawnerInfo s : foundSpawners) {
+            if (vanillaOnly && !isVanillaSpawnerMob(s.entityType)) {
+                continue;
+            }
             if (searchQuery.isEmpty() || getMobDisplayName(s.entityType).toLowerCase().contains(searchQuery.toLowerCase())) {
                 displayedSpawners.add(s);
             }
@@ -276,13 +327,24 @@ public class SpawnerRenderer implements HudElement {
         for (SpawnerGroup g : foundGroups) {
             boolean matches = false;
             for (SpawnerInfo s : g.spawners) {
+                if (vanillaOnly && !isVanillaSpawnerMob(s.entityType)) {
+                    continue;
+                }
                 if (searchQuery.isEmpty() || getMobDisplayName(s.entityType).toLowerCase().contains(searchQuery.toLowerCase())) {
                     matches = true;
                     break;
                 }
             }
             if (matches) {
-                displayedGroups.add(g);
+                List<SpawnerInfo> filteredSpawners = new ArrayList<>();
+                for (SpawnerInfo s : g.spawners) {
+                    if (!vanillaOnly || isVanillaSpawnerMob(s.entityType)) {
+                        filteredSpawners.add(s);
+                    }
+                }
+                if (!filteredSpawners.isEmpty()) {
+                    displayedGroups.add(new SpawnerGroup(filteredSpawners, g.activationPos, g.distanceToPlayer));
+                }
             }
         }
 

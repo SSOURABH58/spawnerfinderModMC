@@ -28,8 +28,7 @@ public class SpawnerFinderClient implements ClientModInitializer {
         // Register the HUD renderer - this shows the closest 5 spawners list
         HudElementRegistry.addLast(
                 Identifier.fromNamespaceAndPath("spawnerfinder", "hud_overlay"),
-                renderer
-        );
+                renderer);
 
         // Register KeyMapping for Toggle
         toggleKey = KeyMappingHelper.registerKeyMapping(VersionHelper.createKeyMapping(
@@ -46,7 +45,7 @@ public class SpawnerFinderClient implements ClientModInitializer {
         // Register KeyMapping for Search Screen
         searchKey = KeyMappingHelper.registerKeyMapping(VersionHelper.createKeyMapping(
                 "key.spawnerfinder.search", // Translation key
-                GLFW.GLFW_KEY_P // Default key 'P'
+                GLFW.GLFW_KEY_U // Default key 'U'
         ));
 
         // Register Tick Handler
@@ -55,19 +54,20 @@ public class SpawnerFinderClient implements ClientModInitializer {
             while (toggleKey.consumeClick()) {
                 config.modEnabled = !config.modEnabled;
                 config.save();
-                if (client.player != null) {
-                    client.player.sendSystemMessage(
-                            Component.literal("Spawner Finder: " + (config.modEnabled ? "§aON" : "§cOFF")));
+                if (client.gui != null) {
+                    client.gui.setOverlayMessage(
+                            Component.literal("Spawner Finder: " + (config.modEnabled ? "§aON" : "§cOFF")), false);
                 }
             }
 
             while (expandKey.consumeClick()) {
                 config.expandedList = !config.expandedList;
                 config.save();
-                if (client.player != null) {
-                    client.player.sendSystemMessage(
+                if (client.gui != null) {
+                    client.gui.setOverlayMessage(
                             Component.literal(
-                                    "Spawner List: " + (config.expandedList ? "§eExpanded" : "§7Compact")));
+                                    "Spawner List: " + (config.expandedList ? "§eExpanded" : "§7Compact")),
+                            false);
                 }
             }
 

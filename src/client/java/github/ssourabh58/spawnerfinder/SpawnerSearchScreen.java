@@ -8,12 +8,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.input.KeyEvent;
 import org.lwjgl.glfw.GLFW;
+import net.minecraft.world.entity.EntityType;
 import java.util.*;
 
 public class SpawnerSearchScreen extends Screen {
     private EditBox editBox;
     private Button clearButton;
     private Button toggleExpandButton;
+    private Button vanillaButton;
     
     private int autocompleteIndex = -1;
     private String lastQuery = "";
@@ -26,8 +28,17 @@ public class SpawnerSearchScreen extends Screen {
     protected void init() {
         int centerX = this.width / 2;
         
+        // Add Support Buttons at the very top
+        this.addRenderableWidget(Button.builder(Component.literal("CurseForge \u2764"), (btn) -> {
+            net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create("https://www.curseforge.com/minecraft/mc-mods/spawnerfinder"));
+        }).bounds(centerX - 100, 22, 95, 20).build());
+
+        this.addRenderableWidget(Button.builder(Component.literal("GitHub \u2605"), (btn) -> {
+            net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create("https://github.com/SSOURABH58/spawnerfinderModMC"));
+        }).bounds(centerX + 5, 22, 95, 20).build());
+
         // Add EditBox
-        this.editBox = new EditBox(this.font, centerX - 100, 60, 200, 20, Component.literal("Search..."));
+        this.editBox = new EditBox(this.font, centerX - 100, 75, 200, 20, Component.literal("Search..."));
         this.editBox.setMaxLength(50);
         this.editBox.setValue(SpawnerRenderer.searchQuery);
         this.addRenderableWidget(this.editBox);
@@ -40,7 +51,7 @@ public class SpawnerSearchScreen extends Screen {
             SpawnerFinderConfig config = SpawnerFinderConfig.getInstance();
             config.searchQuery = "";
             config.save();
-        }).bounds(centerX - 100, 90, 95, 20).build();
+        }).bounds(centerX - 100, 100, 95, 20).build();
         this.addRenderableWidget(this.clearButton);
 
         // Add Toggle Expand Button
@@ -50,13 +61,23 @@ public class SpawnerSearchScreen extends Screen {
             config.expandedList = !config.expandedList;
             config.save();
             btn.setMessage(Component.literal(config.expandedList ? "Collapse View" : "Expand View"));
-        }).bounds(centerX + 5, 90, 95, 20).build();
+        }).bounds(centerX + 5, 100, 95, 20).build();
         this.addRenderableWidget(this.toggleExpandButton);
 
-        // Add Close Button
+        // Add Vanilla Toggle Button
+        String vanillaText = SpawnerFinderConfig.getInstance().vanillaOnly ? "Vanilla: ON" : "Vanilla: OFF";
+        this.vanillaButton = Button.builder(Component.literal(vanillaText), (btn) -> {
+            SpawnerFinderConfig config = SpawnerFinderConfig.getInstance();
+            config.vanillaOnly = !config.vanillaOnly;
+            config.save();
+            btn.setMessage(Component.literal(config.vanillaOnly ? "Vanilla: ON" : "Vanilla: OFF"));
+        }).bounds(centerX - 100, 125, 95, 20).build();
+        this.addRenderableWidget(this.vanillaButton);
+
+        // Add Done Button
         this.addRenderableWidget(Button.builder(Component.literal("Done"), (btn) -> {
             this.onClose();
-        }).bounds(centerX - 100, 120, 200, 20).build());
+        }).bounds(centerX + 5, 125, 95, 20).build());
     }
 
     @Override
@@ -94,14 +115,23 @@ public class SpawnerSearchScreen extends Screen {
         return super.keyPressed(keyEvent);
     }
 
+    // ponytail: Dynamic loading from registry rather than static list
     private List<String> getAutocompleteSuggestions(String text) {
         Set<String> allNames = new LinkedHashSet<>();
-        // Add currently found spawners
+        boolean vanillaOnly = SpawnerFinderConfig.getInstance().vanillaOnly;
+
+        // Add currently found spawners first
         for (SpawnerRenderer.SpawnerInfo s : SpawnerRenderer.getFoundSpawners()) {
-            allNames.add(SpawnerRenderer.getMobDisplayName(s.entityType));
+            if (!vanillaOnly || SpawnerRenderer.isVanillaSpawnerMob(s.entityType)) {
+                allNames.add(SpawnerRenderer.getMobDisplayName(s.entityType));
+            }
         }
-        // Add common ones
-        allNames.addAll(Arrays.asList("Zombie", "Skeleton", "Spider", "Cave Spider", "Magma Cube", "Blaze", "Silverfish"));
+        // Add all dynamically loaded mobs
+        for (EntityType<?> type : SpawnerRenderer.getAllMobs()) {
+            if (!vanillaOnly || SpawnerRenderer.isVanillaSpawnerMob(type)) {
+                allNames.add(SpawnerRenderer.getMobDisplayName(type));
+            }
+        }
         
         List<String> matches = new ArrayList<>();
         for (String name : allNames) {
@@ -116,9 +146,12 @@ public class SpawnerSearchScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         
+        // Draw support request text at the very top
+        graphics.centeredText(this.font, "Support by leaving a heart on CurseForge and a star on GitHub!", this.width / 2, 10, 0xFFFFE066);
+
         // Draw title
-        graphics.centeredText(this.font, "Spawner Finder - Search", this.width / 2, 20, 0xFFFFFFFF);
-        graphics.centeredText(this.font, "Type a mob name to filter nearby spawners (TAB to cycle)", this.width / 2, 40, 0xFFAAAAAA);
+        graphics.centeredText(this.font, "Spawner Finder - Search", this.width / 2, 48, 0xFFFFFFFF);
+        graphics.centeredText(this.font, "Type a mob name to filter nearby spawners (TAB to cycle)", this.width / 2, 60, 0xFFAAAAAA);
 
         // Draw UI list of suggestions below the buttons
         String currentQuery = this.editBox.getValue().trim();
