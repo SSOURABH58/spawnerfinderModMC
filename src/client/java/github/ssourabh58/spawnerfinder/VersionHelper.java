@@ -7,6 +7,8 @@ import java.lang.reflect.Field;
 
 public class VersionHelper {
 
+    private static Object cachedCustomCategory = null;
+
     public static KeyMapping createKeyMapping(String translationKey, int defaultKey) {
         try {
             // Try to find the new 1.21.2+ Category class
@@ -23,34 +25,45 @@ public class VersionHelper {
             }
 
             if (categoryClass != null) {
-                // 1.21.2+ Logic: Use KeyMapping.Category.GAMEPLAY
-                Field gameplayField = categoryClass.getDeclaredField("GAMEPLAY");
-                Object gameplayCategory = gameplayField.get(null);
+                // 1.21.2+ Logic: Register and use custom KeyMapping.Category
+                if (cachedCustomCategory == null) {
+                    try {
+                        for (java.lang.reflect.Method m : categoryClass.getDeclaredMethods()) {
+                            if (m.getName().equals("register") && m.getParameterCount() == 1) {
+                                cachedCustomCategory = m.invoke(null, net.minecraft.resources.Identifier.fromNamespaceAndPath("spawnerfinder", "category"));
+                                break;
+                            }
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Failed to register custom keybind category: " + ex);
+                    }
+                }
+
+                Object customCategory = cachedCustomCategory;
+                if (customCategory == null) {
+                    java.lang.reflect.Field gameplayField = categoryClass.getDeclaredField("GAMEPLAY");
+                    customCategory = gameplayField.get(null);
+                }
 
                 // Find constructor: (String, Type, int, Category)
                 Constructor<KeyMapping> constructor = KeyMapping.class.getConstructor(
                         String.class, InputConstants.Type.class, int.class, categoryClass);
                 return constructor.newInstance(translationKey, InputConstants.Type.KEYSYM, defaultKey,
-                        gameplayCategory);
+                        customCategory);
             } else {
-                // 1.21.1 Logic: Use KeyMapping.CATEGORY_GAMEPLAY (String)
-                Field categoryField = KeyMapping.class.getDeclaredField("CATEGORY_GAMEPLAY");
-                String categoryString = (String) categoryField.get(null);
-
+                // 1.21.1 Logic: Use String category
                 Constructor<KeyMapping> constructor = KeyMapping.class.getConstructor(
                         String.class, InputConstants.Type.class, int.class, String.class);
-                return constructor.newInstance(translationKey, InputConstants.Type.KEYSYM, defaultKey, categoryString);
+                return constructor.newInstance(translationKey, InputConstants.Type.KEYSYM, defaultKey, "key.category.spawnerfinder.category");
             }
         } catch (Exception e) {
-            // Ultimate fallback: Use reflection to try the 1.21.1 String signature manually
-            // if the Category check failed.
+            // Ultimate fallback
             try {
                 Constructor<KeyMapping> constructor = KeyMapping.class.getConstructor(
                         String.class, InputConstants.Type.class, int.class, String.class);
                 return constructor.newInstance(translationKey, InputConstants.Type.KEYSYM, defaultKey,
-                        "key.categories.gameplay");
+                        "key.category.spawnerfinder.category");
             } catch (Exception e2) {
-                // Return null or throw a runtime exception if it's truly broken
                 return null;
             }
         }
