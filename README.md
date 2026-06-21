@@ -1,13 +1,13 @@
 # SpawnerFinder
 
 [![Minecraft Version](https://img.shields.io/badge/Minecraft-26.1-brightgreen.svg)](https://minecraft.net)
-[![Mod Version](https://img.shields.io/badge/Version-2.0.0-blue.svg)](https://github.com/SSOURABH58/spawnerfinderModMC/releases)
+[![Mod Version](https://img.shields.io/badge/Version-2.1.0-blue.svg)](https://github.com/SSOURABH58/spawnerfinderModMC/releases)
 
 A client-side Minecraft mod that displays nearby mob spawners in your HUD with color-coded information showing spawner type, coordinates, and distance to help you locate dungeons efficiently.
 
 > [!NOTE]
 > **Exciting New Update for Minecraft 26.1!** 🚀
-> We are thrilled to announce the release of **SpawnerFinder v2.0.0** built specifically for Minecraft 26.1! This update brings a complete UI overhaul, a powerful multi-spawner grouping engine, smart in-game search functionality with modded spawner support, and massive performance improvements to keep your frame rates high. Read more about the new features below!
+> We are thrilled to announce the release of **SpawnerFinder v2.1.0** built specifically for Minecraft 26.1! This update brings Trial Spawner detection, a complete UI overhaul, a powerful multi-spawner grouping engine, smart in-game search functionality with modded spawner support, and massive performance improvements to keep your frame rates high. Read more about the new features below!
 
 ## 📸 Screenshots
 
@@ -40,6 +40,11 @@ A client-side Minecraft mod that displays nearby mob spawners in your HUD with c
 | Magma Cube | Orange | `#FF8000` |
 | Blaze | Yellow | `#FFFF00` |
 | Silverfish | Gray | `#808080` |
+| Breeze | Light Blue | `#C0E0FF` |
+| Bogged | Moss Green | `#5C714B` |
+| Stray | Ice Blue | `#A0C0D0` |
+| Husk | Sandy Brown | `#C2B280` |
+| Slime | Lime Green | `#00FF80` |
 | Unknown Types | Magenta | `#FF00FF` |
 
 ### Client-Side Only & Anti-Cheat Safe
@@ -61,7 +66,7 @@ A client-side Minecraft mod that displays nearby mob spawners in your HUD with c
 1. **Install Fabric Loader** - Download from [FabricMC](https://fabricmc.net/use/)
 2. **Download Fabric API** - Get it from [Modrinth](https://modrinth.com/mod/fabric-api) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
 3. **Download SpawnerFinder** - Get the latest release from the releases page
-4. **Install the Mod** - Place `spawnerfinder-2.0.0.jar` in your `.minecraft/mods/` folder
+4. **Install the Mod** - Place `spawnerfinder-2.1.0.jar` in your `.minecraft/mods/` folder
 5. **Launch Minecraft** - Start the game with the Fabric profile
 
 ## 🎮 Usage
@@ -147,7 +152,7 @@ cd spawnerfinder
 ./gradlew build
 
 # Find the built JAR
-ls build/libs/spawnerfinder-2.0.0.jar
+ls build/libs/spawnerfinder-2.1.0.jar
 ```
 
 ## 📝 License
@@ -243,6 +248,14 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - Updated to Minecraft 26.1 (Tiny Takeover update)
 - Ported to Java 25 compatibility
 - Migrated rendering logic to the new `HudElementRegistry` API
+
+### v2.1.0 - Trial Spawner Detection & New Mobs
+**New Features & Enhancements:**
+- **Trial Spawner Detection**: Fully detects and highlights Trial Spawners, dynamically extracting the exact spawning mob type from their internal state data.
+- **Trial Spawner HUD Visuals**: Displays the Trial Spawner block icon next to the mob spawn egg icon on the HUD to easily distinguish them.
+- **Search UI Filter**: Added a "Trial Mobs" toggle button in the search settings UI to easily include or exclude Trial Spawners from detection.
+- **Added Mobs Support**: Added custom colors and names for Breeze, Bogged, Stray, Husk, and Slime.
+- **Version upgrade**: Upgraded to v2.1.0.
 
 ### v2.0.0 - The Ultimate Search & UI Update (Minecraft 26.1)
 **New Features & Enhancements:**

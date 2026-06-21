@@ -18,6 +18,7 @@ public class SpawnerFinderConfig {
     public boolean expandedList = false;
     public String searchQuery = "";
     public boolean vanillaOnly = false;
+    public boolean includeTrialSpawners = true;
 
 
     private static SpawnerFinderConfig instance;

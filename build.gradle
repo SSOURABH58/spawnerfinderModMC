@@ -87,3 +87,8 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+
+tasks.register('runInspector', JavaExec) {
+    classpath = sourceSets.client.runtimeClasspath
+    mainClass = 'github.ssourabh58.spawnerfinder.Inspector'
+}

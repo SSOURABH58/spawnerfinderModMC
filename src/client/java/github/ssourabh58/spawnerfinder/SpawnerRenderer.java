@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.entity.TrialSpawnerBlockEntity;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.entity.EntityType;
@@ -84,7 +85,12 @@ public class SpawnerRenderer implements HudElement {
                type == EntityType.CAVE_SPIDER ||
                type == EntityType.MAGMA_CUBE ||
                type == EntityType.BLAZE ||
-               type == EntityType.SILVERFISH;
+               type == EntityType.SILVERFISH ||
+               type == EntityType.BREEZE ||
+               type == EntityType.BOGGED ||
+               type == EntityType.STRAY ||
+               type == EntityType.HUSK ||
+               type == EntityType.SLIME;
     }
 
     private static final List<SpawnerInfo> foundSpawners = new ArrayList<>();
@@ -100,11 +106,13 @@ public class SpawnerRenderer implements HudElement {
         public final BlockPos pos;
         public final EntityType<?> entityType;
         public final double distance;
+        public final boolean isTrialSpawner;
 
-        public SpawnerInfo(BlockPos pos, EntityType<?> entityType, double distance) {
+        public SpawnerInfo(BlockPos pos, EntityType<?> entityType, double distance, boolean isTrialSpawner) {
             this.pos = pos;
             this.entityType = entityType;
             this.distance = distance;
+            this.isTrialSpawner = isTrialSpawner;
         }
     }
 
@@ -134,12 +142,15 @@ public class SpawnerRenderer implements HudElement {
                     var chunkAccess = world.getChunk(playerChunkX + dx, playerChunkZ + dz, ChunkStatus.FULL, false);
                     if (chunkAccess instanceof LevelChunk chunk) {
                         for (BlockEntity blockEntity : chunk.getBlockEntities().values()) {
-                            if (blockEntity instanceof SpawnerBlockEntity spawner) {
-                                BlockPos pos = spawner.getBlockPos();
-                                EntityType<?> entityType = getSpawnerEntityType(spawner, world, pos);
+                            boolean isNormal = blockEntity instanceof SpawnerBlockEntity;
+                            boolean isTrial = blockEntity instanceof TrialSpawnerBlockEntity;
+                            // ponytail: Respect the includeTrialSpawners toggle from config.
+                            if (isNormal || (isTrial && SpawnerFinderConfig.getInstance().includeTrialSpawners)) {
+                                BlockPos pos = blockEntity.getBlockPos();
+                                EntityType<?> entityType = getSpawnerEntityType(blockEntity, world, pos);
                                 if (entityType != null) {
                                     double distance = Math.sqrt(playerPos.distSqr(pos));
-                                    foundSpawners.add(new SpawnerInfo(pos, entityType, distance));
+                                    foundSpawners.add(new SpawnerInfo(pos, entityType, distance, isTrial));
                                 }
                             }
                         }
@@ -238,10 +249,17 @@ public class SpawnerRenderer implements HudElement {
         return centroid;
     }
 
-    private EntityType<?> getSpawnerEntityType(SpawnerBlockEntity spawner, Level world, BlockPos pos) {
+    private EntityType<?> getSpawnerEntityType(BlockEntity blockEntity, Level world, BlockPos pos) {
         try {
-            var displayEntity = spawner.getSpawner().getOrCreateDisplayEntity(world, pos);
-            return displayEntity != null ? displayEntity.getType() : null;
+            if (blockEntity instanceof SpawnerBlockEntity spawner) {
+                var displayEntity = spawner.getSpawner().getOrCreateDisplayEntity(world, pos);
+                return displayEntity != null ? displayEntity.getType() : null;
+            } else if (blockEntity instanceof TrialSpawnerBlockEntity trialSpawner) {
+                var spawner = trialSpawner.getTrialSpawner();
+                var displayEntity = spawner.getStateData().getOrCreateDisplayEntity(spawner, world, spawner.getState());
+                return displayEntity != null ? displayEntity.getType() : null;
+            }
+            return null;
         } catch (Exception e) {
             return null;
         }
@@ -262,6 +280,16 @@ public class SpawnerRenderer implements HudElement {
             return 0xFFFFFF00;
         if (entityType == EntityType.SILVERFISH)
             return 0xFF808080;
+        if (entityType == EntityType.BREEZE)
+            return 0xFFC0E0FF;
+        if (entityType == EntityType.BOGGED)
+            return 0xFF5C714B;
+        if (entityType == EntityType.STRAY)
+            return 0xFFA0C0D0;
+        if (entityType == EntityType.HUSK)
+            return 0xFFC2B280;
+        if (entityType == EntityType.SLIME)
+            return 0xFF00FF80;
         return 0xFFFF00FF;
     }
 
@@ -280,6 +308,16 @@ public class SpawnerRenderer implements HudElement {
             return "Blaze";
         if (entityType == EntityType.SILVERFISH)
             return "Silverfish";
+        if (entityType == EntityType.BREEZE)
+            return "Breeze";
+        if (entityType == EntityType.BOGGED)
+            return "Bogged";
+        if (entityType == EntityType.STRAY)
+            return "Stray";
+        if (entityType == EntityType.HUSK)
+            return "Husk";
+        if (entityType == EntityType.SLIME)
+            return "Slime";
         return entityType.getDescription().getString();
     }
 
@@ -382,11 +420,17 @@ public class SpawnerRenderer implements HudElement {
                 String text = String.format("%s: %d, %d, %d (%.1fm)", mobName, spawner.pos.getX(), spawner.pos.getY(),
                         spawner.pos.getZ(), spawner.distance);
                 
-                // Draw Icon
-                guiGraphics.item(new ItemStack(getIconItem(spawner.entityType)), leftX, leftY);
+                int textOffset = 20;
+                if (spawner.isTrialSpawner) {
+                    guiGraphics.item(new ItemStack(Items.TRIAL_SPAWNER), leftX, leftY);
+                    guiGraphics.item(new ItemStack(getIconItem(spawner.entityType)), leftX + 16, leftY);
+                    textOffset = 36;
+                } else {
+                    guiGraphics.item(new ItemStack(getIconItem(spawner.entityType)), leftX, leftY);
+                }
                 
                 // Draw Text next to icon
-                guiGraphics.text(mc.font, text, leftX + 20, leftY + 4, color, false);
+                guiGraphics.text(mc.font, text, leftX + textOffset, leftY + 4, color, false);
                 leftY += 18;
             }
         }
@@ -434,11 +478,17 @@ public class SpawnerRenderer implements HudElement {
                     String spawnerText = String.format("  %s: %d, %d, %d", mob, spawner.pos.getX(), spawner.pos.getY(),
                             spawner.pos.getZ());
                     
-                    // Draw icon inside groups
-                    guiGraphics.item(new ItemStack(getIconItem(spawner.entityType)), rightX + 5, rightY);
+                    int textOffset = 25;
+                    if (spawner.isTrialSpawner) {
+                        guiGraphics.item(new ItemStack(Items.TRIAL_SPAWNER), rightX + 5, rightY);
+                        guiGraphics.item(new ItemStack(getIconItem(spawner.entityType)), rightX + 21, rightY);
+                        textOffset = 41;
+                    } else {
+                        guiGraphics.item(new ItemStack(getIconItem(spawner.entityType)), rightX + 5, rightY);
+                    }
                     
                     // Draw text next to icon
-                    guiGraphics.text(mc.font, spawnerText, rightX + 25, rightY + 4, getColorForMobType(spawner.entityType), false);
+                    guiGraphics.text(mc.font, spawnerText, rightX + textOffset, rightY + 4, getColorForMobType(spawner.entityType), false);
                     rightY += 18;
                     detailLines++;
                     if (detailLines >= maxDetailLines) break;
