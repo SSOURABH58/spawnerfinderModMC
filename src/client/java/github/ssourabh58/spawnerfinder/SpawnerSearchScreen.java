@@ -74,10 +74,20 @@ public class SpawnerSearchScreen extends Screen {
         }).bounds(centerX - 100, 125, 95, 20).build();
         this.addRenderableWidget(this.vanillaButton);
 
+        // Add Trial Mobs Toggle Button
+        String trialText = SpawnerFinderConfig.getInstance().includeTrialSpawners ? "Trial Mobs: ON" : "Trial Mobs: OFF";
+        Button trialButton = Button.builder(Component.literal(trialText), (btn) -> {
+            SpawnerFinderConfig config = SpawnerFinderConfig.getInstance();
+            config.includeTrialSpawners = !config.includeTrialSpawners;
+            config.save();
+            btn.setMessage(Component.literal(config.includeTrialSpawners ? "Trial Mobs: ON" : "Trial Mobs: OFF"));
+        }).bounds(centerX + 5, 125, 95, 20).build();
+        this.addRenderableWidget(trialButton);
+
         // Add Done Button
         this.addRenderableWidget(Button.builder(Component.literal("Done"), (btn) -> {
             this.onClose();
-        }).bounds(centerX + 5, 125, 95, 20).build());
+        }).bounds(centerX - 100, 150, 200, 20).build());
     }
 
     @Override
@@ -157,7 +167,7 @@ public class SpawnerSearchScreen extends Screen {
         String currentQuery = this.editBox.getValue().trim();
         List<String> suggestions = getAutocompleteSuggestions(currentQuery);
         
-        int startY = 155;
+        int startY = 180;
         int startX = this.width / 2 - 100;
         
         if (!suggestions.isEmpty()) {
