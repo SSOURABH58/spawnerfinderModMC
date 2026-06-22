@@ -54,25 +54,21 @@ public class SpawnerFinderClient implements ClientModInitializer {
             while (toggleKey.consumeClick()) {
                 config.modEnabled = !config.modEnabled;
                 config.save();
-                if (client.gui != null) {
-                    client.gui.setOverlayMessage(
-                            Component.literal("Spawner Finder: " + (config.modEnabled ? "§aON" : "§cOFF")), false);
-                }
+                VersionHelper.setOverlayMessage(client,
+                        Component.literal("Spawner Finder: " + (config.modEnabled ? "§aON" : "§cOFF")), false);
             }
 
             while (expandKey.consumeClick()) {
                 config.expandedList = !config.expandedList;
                 config.save();
-                if (client.gui != null) {
-                    client.gui.setOverlayMessage(
-                            Component.literal(
-                                    "Spawner List: " + (config.expandedList ? "§eExpanded" : "§7Compact")),
-                            false);
-                }
+                VersionHelper.setOverlayMessage(client,
+                        Component.literal(
+                                "Spawner List: " + (config.expandedList ? "§eExpanded" : "§7Compact")),
+                        false);
             }
 
             while (searchKey.consumeClick()) {
-                client.setScreen(new SpawnerSearchScreen());
+                client.setScreenAndShow(new SpawnerSearchScreen());
             }
         });
     }

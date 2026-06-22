@@ -68,4 +68,28 @@ public class VersionHelper {
             }
         }
     }
+
+    public static void setOverlayMessage(net.minecraft.client.Minecraft client, net.minecraft.network.chat.Component message, boolean animate) {
+        if (client.gui == null) return;
+        try {
+            // 26.2+ check: try to find 'hud' field in Gui class
+            try {
+                java.lang.reflect.Field hudField = client.gui.getClass().getDeclaredField("hud");
+                Object hudObj = hudField.get(client.gui);
+                if (hudObj != null) {
+                    java.lang.reflect.Method method = hudObj.getClass().getMethod("setOverlayMessage", net.minecraft.network.chat.Component.class, boolean.class);
+                    method.invoke(hudObj, message, animate);
+                    return;
+                }
+            } catch (NoSuchFieldException | NoSuchMethodException e) {
+                // Ignore, we are on 26.1 or below where it is directly on gui
+            }
+
+            // 26.1 fallback: invoke setOverlayMessage directly on client.gui
+            java.lang.reflect.Method method = client.gui.getClass().getMethod("setOverlayMessage", net.minecraft.network.chat.Component.class, boolean.class);
+            method.invoke(client.gui, message, animate);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

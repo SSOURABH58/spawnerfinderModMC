@@ -79,18 +79,22 @@ public class SpawnerRenderer implements HudElement {
     }
 
     public static boolean isVanillaSpawnerMob(EntityType<?> type) {
-        return type == EntityType.ZOMBIE ||
-               type == EntityType.SKELETON ||
-               type == EntityType.SPIDER ||
-               type == EntityType.CAVE_SPIDER ||
-               type == EntityType.MAGMA_CUBE ||
-               type == EntityType.BLAZE ||
-               type == EntityType.SILVERFISH ||
-               type == EntityType.BREEZE ||
-               type == EntityType.BOGGED ||
-               type == EntityType.STRAY ||
-               type == EntityType.HUSK ||
-               type == EntityType.SLIME;
+        if (type == null) return false;
+        net.minecraft.resources.Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
+        if (id == null || !"minecraft".equals(id.getNamespace())) return false;
+        String path = id.getPath();
+        return "zombie".equals(path) ||
+               "skeleton".equals(path) ||
+               "spider".equals(path) ||
+               "cave_spider".equals(path) ||
+               "magma_cube".equals(path) ||
+               "blaze".equals(path) ||
+               "silverfish".equals(path) ||
+               "breeze".equals(path) ||
+               "bogged".equals(path) ||
+               "stray".equals(path) ||
+               "husk".equals(path) ||
+               "slime".equals(path);
     }
 
     private static final List<SpawnerInfo> foundSpawners = new ArrayList<>();
@@ -266,57 +270,65 @@ public class SpawnerRenderer implements HudElement {
     }
 
     private int getColorForMobType(EntityType<?> entityType) {
-        if (entityType == EntityType.SKELETON)
+        if (entityType == null) return 0xFFFF00FF;
+        net.minecraft.resources.Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+        if (id == null) return 0xFFFF00FF;
+        String path = id.getPath();
+        if ("skeleton".equals(path))
             return 0xFFFFFFFF;
-        if (entityType == EntityType.ZOMBIE)
+        if ("zombie".equals(path))
             return 0xFF00FF00;
-        if (entityType == EntityType.SPIDER)
+        if ("spider".equals(path))
             return 0xFFFF0000;
-        if (entityType == EntityType.CAVE_SPIDER)
+        if ("cave_spider".equals(path))
             return 0xFF0000FF;
-        if (entityType == EntityType.MAGMA_CUBE)
+        if ("magma_cube".equals(path))
             return 0xFFFF8000;
-        if (entityType == EntityType.BLAZE)
+        if ("blaze".equals(path))
             return 0xFFFFFF00;
-        if (entityType == EntityType.SILVERFISH)
+        if ("silverfish".equals(path))
             return 0xFF808080;
-        if (entityType == EntityType.BREEZE)
+        if ("breeze".equals(path))
             return 0xFFC0E0FF;
-        if (entityType == EntityType.BOGGED)
+        if ("bogged".equals(path))
             return 0xFF5C714B;
-        if (entityType == EntityType.STRAY)
+        if ("stray".equals(path))
             return 0xFFA0C0D0;
-        if (entityType == EntityType.HUSK)
+        if ("husk".equals(path))
             return 0xFFC2B280;
-        if (entityType == EntityType.SLIME)
+        if ("slime".equals(path))
             return 0xFF00FF80;
         return 0xFFFF00FF;
     }
 
     public static String getMobDisplayName(EntityType<?> entityType) {
-        if (entityType == EntityType.SKELETON)
+        if (entityType == null) return "Unknown";
+        net.minecraft.resources.Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+        if (id == null) return "Unknown";
+        String path = id.getPath();
+        if ("skeleton".equals(path))
             return "Skeleton";
-        if (entityType == EntityType.ZOMBIE)
+        if ("zombie".equals(path))
             return "Zombie";
-        if (entityType == EntityType.SPIDER)
+        if ("spider".equals(path))
             return "Spider";
-        if (entityType == EntityType.CAVE_SPIDER)
+        if ("cave_spider".equals(path))
             return "Cave Spider";
-        if (entityType == EntityType.MAGMA_CUBE)
+        if ("magma_cube".equals(path))
             return "Magma Cube";
-        if (entityType == EntityType.BLAZE)
+        if ("blaze".equals(path))
             return "Blaze";
-        if (entityType == EntityType.SILVERFISH)
+        if ("silverfish".equals(path))
             return "Silverfish";
-        if (entityType == EntityType.BREEZE)
+        if ("breeze".equals(path))
             return "Breeze";
-        if (entityType == EntityType.BOGGED)
+        if ("bogged".equals(path))
             return "Bogged";
-        if (entityType == EntityType.STRAY)
+        if ("stray".equals(path))
             return "Stray";
-        if (entityType == EntityType.HUSK)
+        if ("husk".equals(path))
             return "Husk";
-        if (entityType == EntityType.SLIME)
+        if ("slime".equals(path))
             return "Slime";
         return entityType.getDescription().getString();
     }
