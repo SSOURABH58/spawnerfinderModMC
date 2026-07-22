@@ -56,6 +56,8 @@ public class SpawnerStorage {
     public static class SavedCluster {
         public String id;
         public List<String> spawnerKeys = new ArrayList<>();
+        public List<String> mobTypes = new ArrayList<>();
+        public String mobNamesSummary = "";
         public int activationX;
         public int activationY;
         public int activationZ;
@@ -65,9 +67,11 @@ public class SpawnerStorage {
 
         public SavedCluster() {}
 
-        public SavedCluster(String id, List<String> spawnerKeys, BlockPos activationPos, String dimension, boolean isPinned, long dateFound) {
+        public SavedCluster(String id, List<String> spawnerKeys, List<String> mobTypes, String mobNamesSummary, BlockPos activationPos, String dimension, boolean isPinned, long dateFound) {
             this.id = id;
             this.spawnerKeys = spawnerKeys;
+            this.mobTypes = mobTypes;
+            this.mobNamesSummary = mobNamesSummary;
             this.activationX = activationPos.getX();
             this.activationY = activationPos.getY();
             this.activationZ = activationPos.getZ();
@@ -172,18 +176,43 @@ public class SpawnerStorage {
         }
     }
 
-    public void putCluster(BlockPos activationPos, String dimension, List<BlockPos> spawnerPositions) {
+    public void putCluster(BlockPos activationPos, String dimension, List<SpawnerRenderer.SpawnerInfo> spawnersInCluster) {
         List<String> keys = new ArrayList<>();
-        for (BlockPos p : spawnerPositions) {
-            keys.add(dimension + ":" + p.getX() + "," + p.getY() + "," + p.getZ());
+        List<String> mobTypes = new ArrayList<>();
+        Map<String, Integer> counts = new LinkedHashMap<>();
+
+        for (SpawnerRenderer.SpawnerInfo s : spawnersInCluster) {
+            keys.add(dimension + ":" + s.pos.getX() + "," + s.pos.getY() + "," + s.pos.getZ());
+            String name = SpawnerRenderer.getMobDisplayName(s.entityType);
+            counts.put(name, counts.getOrDefault(name, 0) + 1);
+            if (s.entityType != null) {
+                net.minecraft.resources.Identifier id = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(s.entityType);
+                if (id != null) mobTypes.add(id.toString());
+            }
         }
         Collections.sort(keys);
+
+        List<String> parts = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            if (entry.getValue() > 1) {
+                parts.add(entry.getKey() + " x" + entry.getValue());
+            } else {
+                parts.add(entry.getKey());
+            }
+        }
+        String summary = String.join(", ", parts);
+        if (summary.isEmpty()) summary = "Cluster of " + spawnersInCluster.size();
+
         String clusterId = "cluster_" + dimension + "_" + activationPos.getX() + "_" + activationPos.getY() + "_" + activationPos.getZ();
 
         SavedCluster existing = clusters.get(clusterId);
         if (existing == null) {
-            clusters.put(clusterId, new SavedCluster(clusterId, keys, activationPos, dimension, false, System.currentTimeMillis()));
+            clusters.put(clusterId, new SavedCluster(clusterId, keys, mobTypes, summary, activationPos, dimension, false, System.currentTimeMillis()));
             dirty = true;
+        } else {
+            existing.mobNamesSummary = summary;
+            existing.mobTypes = mobTypes;
+            existing.spawnerKeys = keys;
         }
     }
 

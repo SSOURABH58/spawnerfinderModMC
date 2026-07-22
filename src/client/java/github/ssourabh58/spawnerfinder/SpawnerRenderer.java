@@ -109,10 +109,17 @@ public class SpawnerRenderer implements HudElement {
     public static String getCurrentServerOrWorldId(Minecraft mc) {
         if (mc == null) return "world_local";
         if (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null) {
-            return "server_" + mc.getCurrentServer().ip;
+            return "server_" + mc.getCurrentServer().ip.toLowerCase().replaceAll("[^a-zA-Z0-9._-]", "_");
         }
         if (mc.hasSingleplayerServer() && mc.getSingleplayerServer() != null) {
-            return "world_" + mc.getSingleplayerServer().getWorldData().getLevelName();
+            try {
+                var server = mc.getSingleplayerServer();
+                var worldPath = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT);
+                String absolutePath = worldPath.toAbsolutePath().normalize().toString();
+                return "singleplayer_" + Math.abs(absolutePath.hashCode());
+            } catch (Exception e) {
+                return "world_" + mc.getSingleplayerServer().getWorldData().getLevelName();
+            }
         }
         return "world_local";
     }
@@ -309,11 +316,7 @@ public class SpawnerRenderer implements HudElement {
             SpawnerStorage storage = SpawnerStorage.getInstance(serverId);
             String currentDimension = Minecraft.getInstance().level.dimension().identifier().toString();
             for (SpawnerGroup g : foundGroups) {
-                List<BlockPos> posList = new ArrayList<>();
-                for (SpawnerInfo s : g.spawners) {
-                    posList.add(s.pos);
-                }
-                storage.putCluster(g.activationPos, currentDimension, posList);
+                storage.putCluster(g.activationPos, currentDimension, g.spawners);
             }
             storage.save();
         }
@@ -627,7 +630,8 @@ public class SpawnerRenderer implements HudElement {
                 for (int i = 0; i < cCount; i++) {
                     SpawnerStorage.SavedCluster c = pinnedClusters.get(i);
                     double dist = Math.sqrt(playerPos.distSqr(c.getActivationPos()));
-                    String ctext = String.format("§e★ §fCluster of %d: %d, %d, %d (%.0fm)", c.spawnerKeys.size(), c.activationX, c.activationY, c.activationZ, dist);
+                    String label = (c.mobNamesSummary != null && !c.mobNamesSummary.isEmpty()) ? c.mobNamesSummary : "Cluster of " + c.spawnerKeys.size();
+                    String ctext = String.format("§e★ §f%s: %d, %d, %d (%.0fm)", label, c.activationX, c.activationY, c.activationZ, dist);
                     guiGraphics.item(new ItemStack(Items.NETHER_STAR), rightX, rightY);
                     guiGraphics.text(mc.font, ctext, rightX + 18, rightY + 4, 0xFFFFFF55, false);
                     rightY += 18;

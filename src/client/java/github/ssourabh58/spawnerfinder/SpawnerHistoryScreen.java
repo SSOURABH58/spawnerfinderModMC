@@ -73,7 +73,7 @@ public class SpawnerHistoryScreen extends Screen {
             currentSort = (currentView == ViewMode.SPAWNERS) ? SortColumn.DISTANCE : SortColumn.SIZE;
             page = 0;
             btn.setMessage(Component.literal("View: " + (currentView == ViewMode.SPAWNERS ? "Spawners" : "Clusters")));
-            refreshData();
+            init();
         }).bounds(centerX - 70, 25, 100, 20).build();
         viewButton.setTooltip(Tooltip.create(Component.literal("Switch between individual spawners history and discovered clusters.")));
         this.addRenderableWidget(viewButton);
@@ -98,41 +98,75 @@ public class SpawnerHistoryScreen extends Screen {
 
         // --- Table Header Column Sorting Buttons ---
         int tableY = 52;
-        // Column 1: Name / Size
-        String col1Label = (currentView == ViewMode.SPAWNERS) ? "Name / Type" : "Cluster Size";
-        Button col1Btn = Button.builder(Component.literal(col1Label + getSortArrow(SortColumn.NAME)), btn -> {
-            setSortColumn(currentView == ViewMode.SPAWNERS ? SortColumn.NAME : SortColumn.SIZE);
-        }).bounds(centerX - 215, tableY, 115, 18).build();
-        col1Btn.setTooltip(Tooltip.create(Component.literal("Sort history by " + col1Label.toLowerCase() + ".")));
-        this.addRenderableWidget(col1Btn);
+        if (currentView == ViewMode.SPAWNERS) {
+            // Spawner View Headers
+            Button col1Btn = Button.builder(Component.literal("Name / Type" + getSortArrow(SortColumn.NAME)), btn -> {
+                setSortColumn(SortColumn.NAME);
+            }).bounds(centerX - 215, tableY, 115, 18).build();
+            col1Btn.setTooltip(Tooltip.create(Component.literal("Sort history by mob type name.")));
+            this.addRenderableWidget(col1Btn);
 
-        // Column 2: Coordinates
-        Button col2Btn = Button.builder(Component.literal("Coordinates" + getSortArrow(SortColumn.COORDINATES)), btn -> {
-            setSortColumn(SortColumn.COORDINATES);
-        }).bounds(centerX - 95, tableY, 90, 18).build();
-        col2Btn.setTooltip(Tooltip.create(Component.literal("Sort history by coordinates.")));
-        this.addRenderableWidget(col2Btn);
+            Button col2Btn = Button.builder(Component.literal("Coordinates" + getSortArrow(SortColumn.COORDINATES)), btn -> {
+                setSortColumn(SortColumn.COORDINATES);
+            }).bounds(centerX - 95, tableY, 90, 18).build();
+            col2Btn.setTooltip(Tooltip.create(Component.literal("Sort history by coordinates.")));
+            this.addRenderableWidget(col2Btn);
 
-        // Column 3: Distance
-        Button col3Btn = Button.builder(Component.literal("Distance" + getSortArrow(SortColumn.DISTANCE)), btn -> {
-            setSortColumn(SortColumn.DISTANCE);
-        }).bounds(centerX - 0, tableY, 65, 18).build();
-        col3Btn.setTooltip(Tooltip.create(Component.literal("Sort history by distance from player.")));
-        this.addRenderableWidget(col3Btn);
+            Button col3Btn = Button.builder(Component.literal("Distance" + getSortArrow(SortColumn.DISTANCE)), btn -> {
+                setSortColumn(SortColumn.DISTANCE);
+            }).bounds(centerX - 0, tableY, 65, 18).build();
+            col3Btn.setTooltip(Tooltip.create(Component.literal("Sort history by distance from player.")));
+            this.addRenderableWidget(col3Btn);
 
-        // Column 4: Date
-        Button col4Btn = Button.builder(Component.literal("Date Found" + getSortArrow(SortColumn.DATE)), btn -> {
-            setSortColumn(SortColumn.DATE);
-        }).bounds(centerX + 70, tableY, 95, 18).build();
-        col4Btn.setTooltip(Tooltip.create(Component.literal("Sort history by timestamp when found.")));
-        this.addRenderableWidget(col4Btn);
+            Button col4Btn = Button.builder(Component.literal("Date Found" + getSortArrow(SortColumn.DATE)), btn -> {
+                setSortColumn(SortColumn.DATE);
+            }).bounds(centerX + 70, tableY, 95, 18).build();
+            col4Btn.setTooltip(Tooltip.create(Component.literal("Sort history by timestamp when found.")));
+            this.addRenderableWidget(col4Btn);
 
-        // Column 5: Pin Header (Sorts pinned items to top!)
-        Button col5Btn = Button.builder(Component.literal("Pin" + getSortArrow(SortColumn.PIN)), btn -> {
-            setSortColumn(SortColumn.PIN);
-        }).bounds(centerX + 170, tableY, 55, 18).build();
-        col5Btn.setTooltip(Tooltip.create(Component.literal("Sort history to bring all pinned items to top.")));
-        this.addRenderableWidget(col5Btn);
+            Button col5Btn = Button.builder(Component.literal("Pin" + getSortArrow(SortColumn.PIN)), btn -> {
+                setSortColumn(SortColumn.PIN);
+            }).bounds(centerX + 170, tableY, 55, 18).build();
+            col5Btn.setTooltip(Tooltip.create(Component.literal("Sort history to bring all pinned items to top.")));
+            this.addRenderableWidget(col5Btn);
+        } else {
+            // Cluster View Headers (With Spawner Count Column)
+            Button col1Btn = Button.builder(Component.literal("Cluster Mobs" + getSortArrow(SortColumn.NAME)), btn -> {
+                setSortColumn(SortColumn.NAME);
+            }).bounds(centerX - 215, tableY, 110, 18).build();
+            col1Btn.setTooltip(Tooltip.create(Component.literal("Sort clusters by mob types included.")));
+            this.addRenderableWidget(col1Btn);
+
+            Button col2Btn = Button.builder(Component.literal("Coords" + getSortArrow(SortColumn.COORDINATES)), btn -> {
+                setSortColumn(SortColumn.COORDINATES);
+            }).bounds(centerX - 100, tableY, 80, 18).build();
+            col2Btn.setTooltip(Tooltip.create(Component.literal("Sort clusters by activation coordinates.")));
+            this.addRenderableWidget(col2Btn);
+
+            Button col3Btn = Button.builder(Component.literal("Dist" + getSortArrow(SortColumn.DISTANCE)), btn -> {
+                setSortColumn(SortColumn.DISTANCE);
+            }).bounds(centerX - 15, tableY, 45, 18).build();
+            col3Btn.setTooltip(Tooltip.create(Component.literal("Sort clusters by distance from player.")));
+            this.addRenderableWidget(col3Btn);
+
+            Button col4Btn = Button.builder(Component.literal("Count" + getSortArrow(SortColumn.SIZE)), btn -> {
+                setSortColumn(SortColumn.SIZE);
+            }).bounds(centerX + 35, tableY, 50, 18).build();
+            col4Btn.setTooltip(Tooltip.create(Component.literal("Sort clusters by number of spawners.")));
+            this.addRenderableWidget(col4Btn);
+
+            Button col5Btn = Button.builder(Component.literal("Date" + getSortArrow(SortColumn.DATE)), btn -> {
+                setSortColumn(SortColumn.DATE);
+            }).bounds(centerX + 90, tableY, 75, 18).build();
+            col5Btn.setTooltip(Tooltip.create(Component.literal("Sort clusters by date found.")));
+            this.addRenderableWidget(col5Btn);
+
+            Button col6Btn = Button.builder(Component.literal("Pin" + getSortArrow(SortColumn.PIN)), btn -> {
+                setSortColumn(SortColumn.PIN);
+            }).bounds(centerX + 170, tableY, 55, 18).build();
+            col6Btn.setTooltip(Tooltip.create(Component.literal("Sort clusters to bring pinned items to top.")));
+            this.addRenderableWidget(col6Btn);
+        }
 
         // --- Bottom Dynamic Pagination Controls ---
         int paginationBtnY = this.height - 30;
@@ -165,7 +199,7 @@ public class SpawnerHistoryScreen extends Screen {
             sortAscending = !sortAscending;
         } else {
             currentSort = col;
-            sortAscending = (col != SortColumn.PIN); // Pin defaults descending (pinned first)
+            sortAscending = (col != SortColumn.PIN && col != SortColumn.SIZE);
         }
         page = 0;
         refreshData();
@@ -239,6 +273,31 @@ public class SpawnerHistoryScreen extends Screen {
                 SpawnerStorage.SavedCluster c = cachedClusters.get(i);
                 int y = startY + (i - startIdx) * 24;
 
+                // Build rich multi-line tooltip detailing all member spawners
+                StringBuilder sb = new StringBuilder();
+                String summary = (c.mobNamesSummary != null && !c.mobNamesSummary.isEmpty()) ? c.mobNamesSummary : "Cluster of " + c.spawnerKeys.size();
+                sb.append("§e").append(summary).append(":\n");
+
+                for (String key : c.spawnerKeys) {
+                    String[] parts = key.split(":");
+                    if (parts.length == 2) {
+                        String[] coords = parts[1].split(",");
+                        if (coords.length == 3) {
+                            SpawnerStorage.SavedSpawner sp = storage.getAllSpawners().stream().filter(s -> s.getKey().equals(key)).findFirst().orElse(null);
+                            String mobName = "Spawner";
+                            if (sp != null && sp.entityTypeId != null) {
+                                net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(sp.entityTypeId);
+                                if (id != null) {
+                                    EntityType<?> t = BuiltInRegistries.ENTITY_TYPE.get(id).map(net.minecraft.core.Holder::value).orElse(null);
+                                    mobName = SpawnerRenderer.getMobDisplayName(t);
+                                }
+                            }
+                            sb.append("§f• ").append(mobName).append(" (").append(coords[0]).append(", ").append(coords[1]).append(", ").append(coords[2]).append(")\n");
+                        }
+                    }
+                }
+                sb.append("§7Activation: ").append(c.activationX).append(", ").append(c.activationY).append(", ").append(c.activationZ);
+
                 Button pinBtn = Button.builder(Component.literal(c.isPinned ? "§e★" : "§fPin"), btn -> {
                     boolean pinned = storage.togglePinCluster(c.id);
                     btn.setMessage(Component.literal(pinned ? "§e★" : "§fPin"));
@@ -246,7 +305,7 @@ public class SpawnerHistoryScreen extends Screen {
                     refreshData();
                 }).bounds(startX + 385, y + 1, 45, 18).build();
 
-                pinBtn.setTooltip(Tooltip.create(Component.literal("Pin or unpin this cluster.")));
+                pinBtn.setTooltip(Tooltip.create(Component.literal(sb.toString().trim())));
                 this.addRenderableWidget(pinBtn);
                 itemPinButtons.add(pinBtn);
             }
@@ -320,7 +379,8 @@ public class SpawnerHistoryScreen extends Screen {
 
         List<SpawnerStorage.SavedCluster> filtered = new ArrayList<>();
         for (SpawnerStorage.SavedCluster c : storage.getAllClusters()) {
-            if (query.isEmpty() || c.dimension.toLowerCase().contains(query)) {
+            String mobSummary = (c.mobNamesSummary != null) ? c.mobNamesSummary.toLowerCase() : "";
+            if (query.isEmpty() || mobSummary.contains(query) || c.dimension.toLowerCase().contains(query)) {
                 filtered.add(c);
             }
         }
@@ -329,6 +389,10 @@ public class SpawnerHistoryScreen extends Screen {
             int result = 0;
             if (currentSort == SortColumn.PIN) {
                 result = Boolean.compare(c2.isPinned, c1.isPinned);
+            } else if (currentSort == SortColumn.NAME) {
+                String s1 = (c1.mobNamesSummary != null) ? c1.mobNamesSummary : "";
+                String s2 = (c2.mobNamesSummary != null) ? c2.mobNamesSummary : "";
+                result = s1.compareToIgnoreCase(s2);
             } else if (currentSort == SortColumn.SIZE) {
                 result = Integer.compare(c1.spawnerKeys.size(), c2.spawnerKeys.size());
             } else if (currentSort == SortColumn.COORDINATES) {
@@ -366,7 +430,6 @@ public class SpawnerHistoryScreen extends Screen {
             int totalPages = Math.max(1, (int) Math.ceil((double) cachedSpawners.size() / itemsPerPage));
             page = Math.min(page, totalPages - 1);
 
-            // Page Info Text rendered at this.height - 45 (above buttons at this.height - 30)
             graphics.centeredText(this.font, String.format("Page %d of %d (%d Spawners)", page + 1, totalPages, cachedSpawners.size()), centerX, this.height - 45, 0xFFFFF066);
 
             int startIdx = page * itemsPerPage;
@@ -405,7 +468,7 @@ public class SpawnerHistoryScreen extends Screen {
                 String distText = String.format("%.0fm", dist);
                 graphics.text(this.font, distText, startX + 215, y + 6, 0xFF55FF55, false);
 
-                // Col 4: Date & Dim (x: startX + 285, leaves 100px before Pin button at x: startX + 385)
+                // Col 4: Date (x: startX + 285)
                 String dateStr = dateFormat.format(new Date(s.lastSeen));
                 graphics.text(this.font, dateStr, startX + 285, y + 6, 0xFFAAAAAA, false);
             }
@@ -413,7 +476,6 @@ public class SpawnerHistoryScreen extends Screen {
             int totalPages = Math.max(1, (int) Math.ceil((double) cachedClusters.size() / itemsPerPage));
             page = Math.min(page, totalPages - 1);
 
-            // Page Info Text rendered at this.height - 45 (above buttons at this.height - 30)
             graphics.centeredText(this.font, String.format("Page %d of %d (%d Clusters)", page + 1, totalPages, cachedClusters.size()), centerX, this.height - 45, 0xFF66DDFF);
 
             int startIdx = page * itemsPerPage;
@@ -431,21 +493,27 @@ public class SpawnerHistoryScreen extends Screen {
 
                 double dist = Math.sqrt(ppos.distSqr(c.getActivationPos()));
 
-                // Col 1: Cluster Size
-                String clusterText = (c.isPinned ? "§e★ " : "") + String.format("Cluster of %d", c.spawnerKeys.size());
+                // Col 1: Cluster Mobs Summary (x: startX + 20)
+                String summary = (c.mobNamesSummary != null && !c.mobNamesSummary.isEmpty()) ? c.mobNamesSummary : "Cluster of " + c.spawnerKeys.size();
+                if (summary.length() > 16) summary = summary.substring(0, 14) + "..";
+                String clusterText = (c.isPinned ? "§e★ " : "") + summary;
                 graphics.text(this.font, clusterText, startX + 20, y + 6, 0xFFFFFF00, false);
 
-                // Col 2: Coords
+                // Col 2: Coords (x: startX + 115)
                 String coordsText = String.format("%d, %d, %d", c.activationX, c.activationY, c.activationZ);
-                graphics.text(this.font, coordsText, startX + 120, y + 6, 0xFFCCCCCC, false);
+                graphics.text(this.font, coordsText, startX + 115, y + 6, 0xFFCCCCCC, false);
 
-                // Col 3: Distance
+                // Col 3: Distance (x: startX + 200)
                 String distText = String.format("%.0fm", dist);
-                graphics.text(this.font, distText, startX + 215, y + 6, 0xFF55FF55, false);
+                graphics.text(this.font, distText, startX + 200, y + 6, 0xFF55FF55, false);
 
-                // Col 4: Date
+                // Col 4: Count Column (x: startX + 250)
+                String countText = c.spawnerKeys.size() + " Mobs";
+                graphics.text(this.font, countText, startX + 250, y + 6, 0xFF66DDFF, false);
+
+                // Col 5: Date (x: startX + 305)
                 String dateStr = dateFormat.format(new Date(c.dateFound));
-                graphics.text(this.font, dateStr, startX + 285, y + 6, 0xFFAAAAAA, false);
+                graphics.text(this.font, dateStr, startX + 305, y + 6, 0xFFAAAAAA, false);
             }
         }
 
