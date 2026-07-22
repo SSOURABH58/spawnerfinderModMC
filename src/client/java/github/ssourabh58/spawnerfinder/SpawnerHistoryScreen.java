@@ -57,14 +57,19 @@ public class SpawnerHistoryScreen extends Screen {
 
     @Override
     protected void init() {
+        // Clear all previous renderable widgets completely before rebuilding screen elements
+        this.clearWidgets();
+        this.itemPinButtons.clear();
+
         int centerX = this.width / 2;
+        String prevQuery = (this.editBox != null) ? this.editBox.getValue() : "";
 
         // --- Top Flat Horizontal Control Bar ---
         // 1. Search Box
         this.editBox = new EditBox(this.font, centerX - 215, 25, 140, 20, Component.literal("Search..."));
         this.editBox.setMaxLength(50);
+        this.editBox.setValue(prevQuery);
         this.addRenderableWidget(this.editBox);
-        this.setFocused(this.editBox);
 
         // 2. View Mode Toggle Button
         String viewLabel = "View: " + (currentView == ViewMode.SPAWNERS ? "Spawners" : "Clusters");
@@ -72,7 +77,6 @@ public class SpawnerHistoryScreen extends Screen {
             currentView = (currentView == ViewMode.SPAWNERS) ? ViewMode.CLUSTERS : ViewMode.SPAWNERS;
             currentSort = (currentView == ViewMode.SPAWNERS) ? SortColumn.DISTANCE : SortColumn.SIZE;
             page = 0;
-            btn.setMessage(Component.literal("View: " + (currentView == ViewMode.SPAWNERS ? "Spawners" : "Clusters")));
             init();
         }).bounds(centerX - 70, 25, 100, 20).build();
         viewButton.setTooltip(Tooltip.create(Component.literal("Switch between individual spawners history and discovered clusters.")));
@@ -202,7 +206,7 @@ public class SpawnerHistoryScreen extends Screen {
             sortAscending = (col != SortColumn.PIN && col != SortColumn.SIZE);
         }
         page = 0;
-        refreshData();
+        init();
     }
 
     private String getSortArrow(SortColumn col) {
@@ -227,7 +231,7 @@ public class SpawnerHistoryScreen extends Screen {
 
     private void rebuildItemButtons() {
         for (Button btn : itemPinButtons) {
-            this.children().remove(btn);
+            this.removeWidget(btn);
         }
         itemPinButtons.clear();
 
@@ -325,7 +329,22 @@ public class SpawnerHistoryScreen extends Screen {
     }
 
     @Override
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent charEvent) {
+        if (this.editBox != null && this.editBox.isFocused()) {
+            if (this.editBox.charTyped(charEvent)) {
+                return true;
+            }
+        }
+        return super.charTyped(charEvent);
+    }
+
+    @Override
     public boolean keyPressed(KeyEvent keyEvent) {
+        if (this.editBox != null && this.editBox.isFocused()) {
+            if (this.editBox.keyPressed(keyEvent)) {
+                return true;
+            }
+        }
         if (keyEvent.key() == GLFW.GLFW_KEY_ESCAPE) {
             this.onClose();
             return true;

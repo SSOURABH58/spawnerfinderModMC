@@ -111,11 +111,24 @@ public class SpawnerStorage {
 
     private SpawnerStorage(String serverId) {
         this.serverId = serverId;
-        if (!SAVE_DIR.exists()) {
-            SAVE_DIR.mkdirs();
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        File calculatedFile = null;
+        if (mc != null && mc.hasSingleplayerServer() && mc.getSingleplayerServer() != null) {
+            try {
+                File worldDir = mc.getSingleplayerServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).toFile();
+                calculatedFile = new File(worldDir, "spawnerfinder_data.json");
+            } catch (Exception e) {
+                // Fallback
+            }
         }
-        String safeName = serverId.replaceAll("[^a-zA-Z0-9._-]", "_");
-        this.saveFile = new File(SAVE_DIR, safeName + ".json");
+        if (calculatedFile == null) {
+            if (!SAVE_DIR.exists()) {
+                SAVE_DIR.mkdirs();
+            }
+            String safeName = serverId.replaceAll("[^a-zA-Z0-9._-]", "_");
+            calculatedFile = new File(SAVE_DIR, safeName + ".json");
+        }
+        this.saveFile = calculatedFile;
     }
 
     public void load() {
