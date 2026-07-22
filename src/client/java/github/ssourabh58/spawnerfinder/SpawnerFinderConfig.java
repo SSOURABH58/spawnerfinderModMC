@@ -19,6 +19,9 @@ public class SpawnerFinderConfig {
     public String searchQuery = "";
     public boolean vanillaOnly = false;
     public boolean includeTrialSpawners = true;
+    public int searchDistance = 10;
+    public boolean showDestroyed = true;
+    public boolean showPinned = true;
 
 
     private static SpawnerFinderConfig instance;

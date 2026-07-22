@@ -106,17 +106,34 @@ public class SpawnerRenderer implements HudElement {
         return foundSpawners;
     }
 
+    public static String getCurrentServerOrWorldId(Minecraft mc) {
+        if (mc == null) return "world_local";
+        if (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null) {
+            return "server_" + mc.getCurrentServer().ip;
+        }
+        if (mc.hasSingleplayerServer() && mc.getSingleplayerServer() != null) {
+            return "world_" + mc.getSingleplayerServer().getWorldData().getLevelName();
+        }
+        return "world_local";
+    }
+
     public static class SpawnerInfo {
         public final BlockPos pos;
         public final EntityType<?> entityType;
         public final double distance;
         public final boolean isTrialSpawner;
+        public final boolean isDestroyed;
 
-        public SpawnerInfo(BlockPos pos, EntityType<?> entityType, double distance, boolean isTrialSpawner) {
+        public SpawnerInfo(BlockPos pos, EntityType<?> entityType, double distance, boolean isTrialSpawner, boolean isDestroyed) {
             this.pos = pos;
             this.entityType = entityType;
             this.distance = distance;
             this.isTrialSpawner = isTrialSpawner;
+            this.isDestroyed = isDestroyed;
+        }
+
+        public SpawnerInfo(BlockPos pos, EntityType<?> entityType, double distance, boolean isTrialSpawner) {
+            this(pos, entityType, distance, isTrialSpawner, false);
         }
     }
 
@@ -134,12 +151,15 @@ public class SpawnerRenderer implements HudElement {
 
     private void scanForSpawners(Level world, BlockPos playerPos) {
         foundSpawners.clear();
-        int chunkRadius = 10; // Approx 160 blocks radius
-
-        // Get player chunk coordinates
+        Minecraft mc = Minecraft.getInstance();
+        String serverId = getCurrentServerOrWorldId(mc);
+        SpawnerStorage storage = SpawnerStorage.getInstance(serverId);
+        String currentDimension = world.dimension().identifier().toString();
+        int chunkRadius = Math.max(0, SpawnerFinderConfig.getInstance().searchDistance);
         int playerChunkX = playerPos.getX() >> 4;
         int playerChunkZ = playerPos.getZ() >> 4;
 
+        // 1. Scan active loaded chunks around player and store active spawners
         for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
             for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
                 try {
@@ -148,13 +168,14 @@ public class SpawnerRenderer implements HudElement {
                         for (BlockEntity blockEntity : chunk.getBlockEntities().values()) {
                             boolean isNormal = blockEntity instanceof SpawnerBlockEntity;
                             boolean isTrial = blockEntity instanceof TrialSpawnerBlockEntity;
-                            // ponytail: Respect the includeTrialSpawners toggle from config.
                             if (isNormal || (isTrial && SpawnerFinderConfig.getInstance().includeTrialSpawners)) {
                                 BlockPos pos = blockEntity.getBlockPos();
                                 EntityType<?> entityType = getSpawnerEntityType(blockEntity, world, pos);
                                 if (entityType != null) {
-                                    double distance = Math.sqrt(playerPos.distSqr(pos));
-                                    foundSpawners.add(new SpawnerInfo(pos, entityType, distance, isTrial));
+                                    net.minecraft.resources.Identifier keyId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+                                    if (keyId != null) {
+                                        storage.putSpawner(pos, currentDimension, keyId.toString(), isTrial);
+                                    }
                                 }
                             }
                         }
@@ -165,28 +186,82 @@ public class SpawnerRenderer implements HudElement {
             }
         }
 
+        // 2. Re-validate saved spawners in loaded chunks (mark destroyed if spawner block is missing)
+        for (SpawnerStorage.SavedSpawner saved : storage.getAllSpawners()) {
+            if (saved.dimension.equals(currentDimension)) {
+                int scx = saved.x >> 4;
+                int scz = saved.z >> 4;
+                try {
+                    var chunkAccess = world.getChunk(scx, scz, ChunkStatus.FULL, false);
+                    if (chunkAccess instanceof LevelChunk chunk) {
+                        BlockPos spawnerPos = saved.getPos();
+                        BlockEntity be = chunk.getBlockEntity(spawnerPos);
+                        boolean isNormal = be instanceof SpawnerBlockEntity;
+                        boolean isTrial = be instanceof TrialSpawnerBlockEntity;
+                        if (!isNormal && !isTrial) {
+                            storage.markDestroyed(spawnerPos, currentDimension);
+                        }
+                    }
+                } catch (Exception e) {
+                    // Chunk not loaded currently
+                }
+            }
+        }
+
+        storage.save();
+
+        // 3. Populate foundSpawners list from storage for current dimension
+        for (SpawnerStorage.SavedSpawner saved : storage.getAllSpawners()) {
+            if (saved.dimension.equals(currentDimension)) {
+                BlockPos pos = saved.getPos();
+                double distance = Math.sqrt(playerPos.distSqr(pos));
+                double maxBlockDistance = chunkRadius * 16.0;
+                if (chunkRadius == 0) maxBlockDistance = 16.0; // minimum radius for current chunk
+
+                if (distance <= maxBlockDistance) {
+                    EntityType<?> entityType = null;
+                    if (saved.entityTypeId != null) {
+                        net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(saved.entityTypeId);
+                        if (id != null) {
+                            entityType = BuiltInRegistries.ENTITY_TYPE.get(id).map(Holder::value).orElse(null);
+                        }
+                    }
+                    foundSpawners.add(new SpawnerInfo(pos, entityType, distance, saved.isTrialSpawner, saved.destroyed));
+                }
+            }
+        }
+
         // Sort by distance
         foundSpawners.sort(Comparator.comparingDouble(s -> s.distance));
 
-        // Calculate groups
+        // Calculate groups using active spawners
         findSpawnerGroups(playerPos);
     }
 
     private void findSpawnerGroups(BlockPos playerPos) {
         foundGroups.clear();
-        if (foundSpawners.size() < 2)
+        
+        // Filter out destroyed spawners for group calculations
+        List<SpawnerInfo> activeSpawners = new ArrayList<>();
+        for (SpawnerInfo s : foundSpawners) {
+            if (!s.isDestroyed) {
+                activeSpawners.add(s);
+            }
+        }
+
+        if (activeSpawners.size() < 2)
             return;
 
         List<List<SpawnerInfo>> potentialGroups = new ArrayList<>();
 
-        for (int i = 0; i < foundSpawners.size(); i++) {
+        for (int i = 0; i < activeSpawners.size(); i++) {
             List<SpawnerInfo> currentGroup = new ArrayList<>();
-            currentGroup.add(foundSpawners.get(i));
+            currentGroup.add(activeSpawners.get(i));
 
-            for (int j = 0; j < foundSpawners.size(); j++) {
+            for (int j = 0; j < activeSpawners.size(); j++) {
                 if (i == j)
                     continue;
-                SpawnerInfo candidate = foundSpawners.get(j);
+                SpawnerInfo candidate = activeSpawners.get(j);
 
                 List<SpawnerInfo> testList = new ArrayList<>(currentGroup);
                 testList.add(candidate);
@@ -227,6 +302,21 @@ public class SpawnerRenderer implements HudElement {
                 return sizeCompare;
             return Double.compare(g1.distanceToPlayer, g2.distanceToPlayer);
         });
+
+        // Save found clusters into persistent storage
+        if (Minecraft.getInstance().level != null) {
+            String serverId = getCurrentServerOrWorldId(Minecraft.getInstance());
+            SpawnerStorage storage = SpawnerStorage.getInstance(serverId);
+            String currentDimension = Minecraft.getInstance().level.dimension().identifier().toString();
+            for (SpawnerGroup g : foundGroups) {
+                List<BlockPos> posList = new ArrayList<>();
+                for (SpawnerInfo s : g.spawners) {
+                    posList.add(s.pos);
+                }
+                storage.putCluster(g.activationPos, currentDimension, posList);
+            }
+            storage.save();
+        }
     }
 
     private BlockPos getValidActivationSpot(List<SpawnerInfo> list) {
@@ -364,7 +454,12 @@ public class SpawnerRenderer implements HudElement {
         // Apply filtering
         List<SpawnerInfo> displayedSpawners = new ArrayList<>();
         boolean vanillaOnly = SpawnerFinderConfig.getInstance().vanillaOnly;
+        boolean showDestroyed = SpawnerFinderConfig.getInstance().showDestroyed;
+
         for (SpawnerInfo s : foundSpawners) {
+            if (!showDestroyed && s.isDestroyed) {
+                continue;
+            }
             if (vanillaOnly && !isVanillaSpawnerMob(s.entityType)) {
                 continue;
             }
@@ -377,6 +472,9 @@ public class SpawnerRenderer implements HudElement {
         for (SpawnerGroup g : foundGroups) {
             boolean matches = false;
             for (SpawnerInfo s : g.spawners) {
+                if (!showDestroyed && s.isDestroyed) {
+                    continue;
+                }
                 if (vanillaOnly && !isVanillaSpawnerMob(s.entityType)) {
                     continue;
                 }
@@ -388,7 +486,7 @@ public class SpawnerRenderer implements HudElement {
             if (matches) {
                 List<SpawnerInfo> filteredSpawners = new ArrayList<>();
                 for (SpawnerInfo s : g.spawners) {
-                    if (!vanillaOnly || isVanillaSpawnerMob(s.entityType)) {
+                    if ((showDestroyed || !s.isDestroyed) && (!vanillaOnly || isVanillaSpawnerMob(s.entityType))) {
                         filteredSpawners.add(s);
                     }
                 }
@@ -420,6 +518,42 @@ public class SpawnerRenderer implements HudElement {
         String header = String.format("§6§lSpawners found: %d", displayedSpawners.size());
         guiGraphics.text(mc.font, header, leftX, leftY, 0xFFFFFFFF, false);
         leftY += 12;
+
+        // Render Pinned Spawners if enabled
+        if (SpawnerFinderConfig.getInstance().showPinned) {
+            String serverId = getCurrentServerOrWorldId(mc);
+            SpawnerStorage storage = SpawnerStorage.getInstance(serverId);
+            String currentDimension = world.dimension().identifier().toString();
+
+            List<SpawnerStorage.SavedSpawner> pinnedList = new ArrayList<>();
+            for (SpawnerStorage.SavedSpawner s : storage.getAllSpawners()) {
+                if (s.isPinned && s.dimension.equals(currentDimension)) {
+                    pinnedList.add(s);
+                }
+            }
+
+            if (!pinnedList.isEmpty()) {
+                guiGraphics.text(mc.font, "§e★ Pinned Spawners:", leftX, leftY, 0xFFFFFF00, false);
+                leftY += 12;
+
+                int pCount = expandedList() ? pinnedList.size() : Math.min(3, pinnedList.size());
+                for (int i = 0; i < pCount; i++) {
+                    SpawnerStorage.SavedSpawner s = pinnedList.get(i);
+                    double dist = Math.sqrt(playerPos.distSqr(s.getPos()));
+                    EntityType<?> type = null;
+                    if (s.entityTypeId != null) {
+                        net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(s.entityTypeId);
+                        if (id != null) type = BuiltInRegistries.ENTITY_TYPE.get(id).map(Holder::value).orElse(null);
+                    }
+                    String mobName = getMobDisplayName(type);
+                    String ptext = String.format("§e★ §f%s: %d, %d, %d (%.0fm)", mobName, s.x, s.y, s.z, dist);
+                    guiGraphics.item(new ItemStack(Items.NETHER_STAR), leftX, leftY);
+                    guiGraphics.text(mc.font, ptext, leftX + 18, leftY + 4, 0xFFFFFF55, false);
+                    leftY += 18;
+                }
+            }
+        }
+
         guiGraphics.text(mc.font, "----------------", leftX, leftY, 0xFFAAAAAA, false);
         leftY += 14;
 
@@ -428,12 +562,21 @@ public class SpawnerRenderer implements HudElement {
             for (int i = 0; i < count; i++) {
                 SpawnerInfo spawner = displayedSpawners.get(i);
                 String mobName = getMobDisplayName(spawner.entityType);
-                int color = getColorForMobType(spawner.entityType);
-                String text = String.format("%s: %d, %d, %d (%.1fm)", mobName, spawner.pos.getX(), spawner.pos.getY(),
-                        spawner.pos.getZ(), spawner.distance);
+                int color = spawner.isDestroyed ? 0xFF888888 : getColorForMobType(spawner.entityType);
+                
+                String text;
+                if (spawner.isDestroyed) {
+                    text = String.format("§7§m%s§r §c[X]: %d, %d, %d (%.1fm)", mobName, spawner.pos.getX(), spawner.pos.getY(),
+                            spawner.pos.getZ(), spawner.distance);
+                } else {
+                    text = String.format("%s: %d, %d, %d (%.1fm)", mobName, spawner.pos.getX(), spawner.pos.getY(),
+                            spawner.pos.getZ(), spawner.distance);
+                }
                 
                 int textOffset = 20;
-                if (spawner.isTrialSpawner) {
+                if (spawner.isDestroyed) {
+                    guiGraphics.item(new ItemStack(Items.BARRIER), leftX, leftY);
+                } else if (spawner.isTrialSpawner) {
                     guiGraphics.item(new ItemStack(Items.TRIAL_SPAWNER), leftX, leftY);
                     guiGraphics.item(new ItemStack(getIconItem(spawner.entityType)), leftX + 16, leftY);
                     textOffset = 36;
@@ -447,8 +590,21 @@ public class SpawnerRenderer implements HudElement {
             }
         }
 
-        // --- Right Side: Spawner Groups ---
-        if (!displayedGroups.isEmpty()) {
+        // --- Right Side: Spawner Groups & Pinned Clusters ---
+        String serverId = getCurrentServerOrWorldId(mc);
+        SpawnerStorage storage = SpawnerStorage.getInstance(serverId);
+        String currentDimension = world.dimension().identifier().toString();
+
+        List<SpawnerStorage.SavedCluster> pinnedClusters = new ArrayList<>();
+        if (SpawnerFinderConfig.getInstance().showPinned) {
+            for (SpawnerStorage.SavedCluster c : storage.getAllClusters()) {
+                if (c.isPinned && c.dimension.equals(currentDimension)) {
+                    pinnedClusters.add(c);
+                }
+            }
+        }
+
+        if (!displayedGroups.isEmpty() || !pinnedClusters.isEmpty()) {
             int rightWidth = 240;
             int rightX = guiWidth - rightWidth - 5;
             int rightY = 10;
@@ -462,6 +618,22 @@ public class SpawnerRenderer implements HudElement {
             String groupHeader = String.format("§b§lSpawner Groups found: %d", displayedGroups.size());
             guiGraphics.text(mc.font, groupHeader, rightX, rightY, 0xFFFFFFFF, false);
             rightY += 12;
+
+            if (!pinnedClusters.isEmpty()) {
+                guiGraphics.text(mc.font, "§e★ Pinned Clusters:", rightX, rightY, 0xFFFFFF00, false);
+                rightY += 12;
+
+                int cCount = expandedList() ? pinnedClusters.size() : Math.min(3, pinnedClusters.size());
+                for (int i = 0; i < cCount; i++) {
+                    SpawnerStorage.SavedCluster c = pinnedClusters.get(i);
+                    double dist = Math.sqrt(playerPos.distSqr(c.getActivationPos()));
+                    String ctext = String.format("§e★ §fCluster of %d: %d, %d, %d (%.0fm)", c.spawnerKeys.size(), c.activationX, c.activationY, c.activationZ, dist);
+                    guiGraphics.item(new ItemStack(Items.NETHER_STAR), rightX, rightY);
+                    guiGraphics.text(mc.font, ctext, rightX + 18, rightY + 4, 0xFFFFFF55, false);
+                    rightY += 18;
+                }
+            }
+
             guiGraphics.text(mc.font, "----------------", rightX, rightY, 0xFFAAAAAA, false);
             rightY += 14;
 

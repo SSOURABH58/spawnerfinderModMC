@@ -15,6 +15,7 @@ public class SpawnerFinderClient implements ClientModInitializer {
     private static KeyMapping toggleKey;
     private static KeyMapping expandKey;
     private static KeyMapping searchKey;
+    private static KeyMapping historyKey;
 
     @Override
     public void onInitializeClient() {
@@ -48,6 +49,12 @@ public class SpawnerFinderClient implements ClientModInitializer {
                 GLFW.GLFW_KEY_U // Default key 'U'
         ));
 
+        // Register KeyMapping for History Screen
+        historyKey = KeyMappingHelper.registerKeyMapping(VersionHelper.createKeyMapping(
+                "key.spawnerfinder.history", // Translation key
+                GLFW.GLFW_KEY_H // Default key 'H'
+        ));
+
         // Register Tick Handler
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             SpawnerFinderConfig config = SpawnerFinderConfig.getInstance();
@@ -69,6 +76,10 @@ public class SpawnerFinderClient implements ClientModInitializer {
 
             while (searchKey.consumeClick()) {
                 client.setScreenAndShow(new SpawnerSearchScreen());
+            }
+
+            while (historyKey.consumeClick()) {
+                client.setScreenAndShow(new SpawnerHistoryScreen());
             }
         });
     }
