@@ -99,15 +99,17 @@ Once installed, the mod automatically starts working:
 
 ## 🔄 Version History
 
-### v2.2.0 - History Table, Multi-Pinning & Dynamic Distance (Minecraft 26.2)
-**New Features & Enhancements:**
-- **Updated to Minecraft 26.2**.
-- **Spawner History Table (`H` key)**: Wide interactive table UI displaying saved spawners and clusters. Click column headers (**Name**, **Coordinates**, **Distance**, **Date Found**, **Pin**) to sort. Automatically fits screen height with page controls.
-- **Persistent Storage**: Saved spawners and clusters stored per world/server in `<configDir>/spawnerfinder_saves/<serverId>.json`.
-- **Destroyed Spawner Validation**: Automatically marks destroyed/mined spawners in gray text with `[X]` tag and `BARRIER` icon upon revisiting loaded chunks.
-- **Multi-Pinning & Top HUD Overlay Highlights**: Pin any spawner or cluster to display it at the top of the in-game HUD overlay with a Star `§e★` tag and `NETHER_STAR` icon.
-- **Search Distance Slider**: Dynamically bounded slider from 0 to active client/server render distance.
-- **Clear All Pins**: Dedicated `Clear Pins` buttons with red warning hover tooltips and native hover hints on all buttons.
+### v2.2.0 - History Table, Multi-Pinning, Cluster Details & Isolated World Saves (Minecraft 26.2)
+**Complete Feature Additions & Enhancements:**
+- **Updated to Minecraft 26.2** with modern Fabric rendering engine (`GuiGraphicsExtractor`, `CharacterEvent`).
+- **Direct Singleplayer World Folder Saves**: Spawner history for singleplayer is stored directly inside each world's folder (`.minecraft/saves/<world_folder>/spawnerfinder_data.json`). Moving, backing up, or deleting worlds keeps spawner history 100% isolated and cleanly synced.
+- **Spawner History Table GUI (`H` key)**: Wide interactive table UI displaying saved spawners and clusters. Click column headers (**Name**, **Coordinates**, **Distance**, **Count**, **Date Found**, **Pin**) to sort. Automatically fits screen height with page controls.
+- **Cluster View & Detailed Mob Summaries**: Clusters are named by constituent mob types (e.g. `Zombie x2, Skeleton`). Includes a dedicated **Spawner Count** column and rich multi-line hover tooltips listing individual spawner coordinates.
+- **Cluster & Mob Search Filter**: Typing mob names (e.g., `spider`, `zombie`, `skeleton`) searches both individual spawners and cluster mob summaries.
+- **Destroyed Spawner Validation**: Automatically detects destroyed/mined spawners upon revisiting loaded chunks, rendering them grayed out with `[X]` strike-through formatting and a barrier icon.
+- **Multi-Pinning & Top HUD Highlights**: Pin any spawner or cluster to display it at the top of the in-game HUD overlay with a Star `§e★` tag and `NETHER_STAR` icon.
+- **Search Distance Slider & Render Distance Enforcement**: Dynamically bounded slider from 0 to active client/server render distance with server max render distance notification.
+- **Clear All Pins**: Dedicated `Clear Pins` buttons with red safety warning tooltips and native hover hints on all buttons.
 
 ### v2.1.0 - Trial Spawner Detection & New Mobs
 - Trial Spawner detection, custom icons, and Trial Mobs search toggle filter.
