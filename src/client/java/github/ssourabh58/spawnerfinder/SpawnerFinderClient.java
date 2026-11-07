@@ -8,7 +8,7 @@ import net.minecraft.resources.Identifier;
 // import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 public class SpawnerFinderClient implements ClientModInitializer {
 
@@ -34,25 +34,25 @@ public class SpawnerFinderClient implements ClientModInitializer {
         // Register KeyMapping for Toggle
         toggleKey = KeyMappingHelper.registerKeyMapping(VersionHelper.createKeyMapping(
                 "key.spawnerfinder.toggle", // Translation key
-                GLFW.GLFW_KEY_O // Default key 'O'
+                InputConstants.KEY_O // Default key 'O'
         ));
 
         // Register KeyMapping for Expand List
         expandKey = KeyMappingHelper.registerKeyMapping(VersionHelper.createKeyMapping(
                 "key.spawnerfinder.expand", // Translation key
-                GLFW.GLFW_KEY_I // Default key 'I'
+                InputConstants.KEY_I // Default key 'I'
         ));
 
         // Register KeyMapping for Search Screen
         searchKey = KeyMappingHelper.registerKeyMapping(VersionHelper.createKeyMapping(
                 "key.spawnerfinder.search", // Translation key
-                GLFW.GLFW_KEY_U // Default key 'U'
+                InputConstants.KEY_U // Default key 'U'
         ));
 
         // Register KeyMapping for History Screen
         historyKey = KeyMappingHelper.registerKeyMapping(VersionHelper.createKeyMapping(
                 "key.spawnerfinder.history", // Translation key
-                GLFW.GLFW_KEY_H // Default key 'H'
+                InputConstants.KEY_H // Default key 'H'
         ));
 
         // Register Tick Handler

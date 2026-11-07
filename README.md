@@ -1,13 +1,13 @@
 # SpawnerFinder
 
-[![Minecraft Version](https://img.shields.io/badge/Minecraft-26.2-brightgreen.svg)](https://minecraft.net)
-[![Mod Version](https://img.shields.io/badge/Version-2.2.0-blue.svg)](https://github.com/SSOURABH58/spawnerfinderModMC/releases)
+[![Minecraft Version](https://img.shields.io/badge/Minecraft-26.3-brightgreen.svg)](https://minecraft.net)
+[![Mod Version](https://img.shields.io/badge/Version-2.3.0-blue.svg)](https://github.com/SSOURABH58/spawnerfinderModMC/releases)
 
 A client-side Minecraft mod that displays nearby mob spawners in your HUD with color-coded information showing spawner type, coordinates, and distance to help you locate dungeons efficiently.
 
 > [!NOTE]
-> **Exciting New Update for Minecraft 26.2!** 🚀
-> We are thrilled to announce **SpawnerFinder v2.2.0**! This update introduces a full **Spawner History Table GUI**, persistent world/server spawner saving, destroyed spawner detection, multi-pinning support with top HUD highlights, dynamic search distance slider capped to render distance, and native hover tooltips across all controls.
+> **Exciting New Update for Minecraft 26.3!** 🚀
+> We are thrilled to announce **SpawnerFinder v2.3.0** updated for **Minecraft 26.3**! This release updates to the new input handling and SDL architecture, while maintaining the full **Spawner History Table GUI**, persistent world/server spawner saving, destroyed spawner detection, multi-pinning support with top HUD highlights, dynamic search distance slider capped to render distance, and native hover tooltips across all controls.
 
 ## 📸 Screenshots
 

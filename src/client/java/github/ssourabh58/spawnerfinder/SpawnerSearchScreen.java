@@ -10,7 +10,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.input.KeyEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.Blaze3D;
 import net.minecraft.world.entity.EntityType;
 import java.util.*;
 
@@ -34,13 +35,13 @@ public class SpawnerSearchScreen extends Screen {
         
         // Add Support Buttons at the very top
         Button curseForgeBtn = Button.builder(Component.literal("CurseForge \u2764"), (btn) -> {
-            net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create("https://www.curseforge.com/minecraft/mc-mods/spawnerfinder"));
+            Blaze3D.openUri(java.net.URI.create("https://www.curseforge.com/minecraft/mc-mods/spawnerfinder"));
         }).bounds(centerX - 100, 22, 95, 20).build();
         curseForgeBtn.setTooltip(Tooltip.create(Component.literal("Support SpawnerFinder on CurseForge!")));
         this.addRenderableWidget(curseForgeBtn);
 
         Button gitHubBtn = Button.builder(Component.literal("GitHub \u2605"), (btn) -> {
-            net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create("https://github.com/SSOURABH58/spawnerfinderModMC"));
+            Blaze3D.openUri(java.net.URI.create("https://github.com/SSOURABH58/spawnerfinderModMC"));
         }).bounds(centerX + 5, 22, 95, 20).build();
         gitHubBtn.setTooltip(Tooltip.create(Component.literal("Star SpawnerFinder on GitHub!")));
         this.addRenderableWidget(gitHubBtn);
@@ -167,7 +168,7 @@ public class SpawnerSearchScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent keyEvent) {
-        if (keyEvent.key() == GLFW.GLFW_KEY_TAB) {
+        if (keyEvent.key() == InputConstants.KEY_TAB) {
             String currentText = this.editBox.getValue();
             List<String> suggestions = getAutocompleteSuggestions(currentText);
             if (!suggestions.isEmpty()) {

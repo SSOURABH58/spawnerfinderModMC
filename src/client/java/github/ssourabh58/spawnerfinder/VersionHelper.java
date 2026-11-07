@@ -45,28 +45,43 @@ public class VersionHelper {
                     customCategory = gameplayField.get(null);
                 }
 
+                // 26.3+ constructor: KeyMapping(String, int, KeyMapping.Category)
+                try {
+                    Constructor<KeyMapping> constructor3 = KeyMapping.class.getConstructor(
+                            String.class, int.class, categoryClass);
+                    return constructor3.newInstance(translationKey, defaultKey, customCategory);
+                } catch (NoSuchMethodException ignored) {
+                }
+
                 // Find constructor: (String, Type, int, Category)
-                Constructor<KeyMapping> constructor = KeyMapping.class.getConstructor(
-                        String.class, InputConstants.Type.class, int.class, categoryClass);
-                return constructor.newInstance(translationKey, InputConstants.Type.KEYSYM, defaultKey,
-                        customCategory);
+                try {
+                    Constructor<KeyMapping> constructor4 = KeyMapping.class.getConstructor(
+                            String.class, InputConstants.Type.class, int.class, categoryClass);
+                    InputConstants.Type type = null;
+                    for (InputConstants.Type t : InputConstants.Type.values()) {
+                        if (t.name().equals("KEYBOARD") || t.name().equals("KEYSYM")) {
+                            type = t;
+                            break;
+                        }
+                    }
+                    if (type == null) type = InputConstants.Type.values()[0];
+                    return constructor4.newInstance(translationKey, type, defaultKey, customCategory);
+                } catch (NoSuchMethodException ignored) {
+                }
             } else {
                 // 1.21.1 Logic: Use String category
-                Constructor<KeyMapping> constructor = KeyMapping.class.getConstructor(
-                        String.class, InputConstants.Type.class, int.class, String.class);
-                return constructor.newInstance(translationKey, InputConstants.Type.KEYSYM, defaultKey, "key.category.spawnerfinder.category");
+                try {
+                    Constructor<KeyMapping> constructor = KeyMapping.class.getConstructor(
+                            String.class, InputConstants.Type.class, int.class, String.class);
+                    InputConstants.Type type = InputConstants.Type.values()[0];
+                    return constructor.newInstance(translationKey, type, defaultKey, "key.category.spawnerfinder.category");
+                } catch (Exception ignored) {
+                }
             }
         } catch (Exception e) {
-            // Ultimate fallback
-            try {
-                Constructor<KeyMapping> constructor = KeyMapping.class.getConstructor(
-                        String.class, InputConstants.Type.class, int.class, String.class);
-                return constructor.newInstance(translationKey, InputConstants.Type.KEYSYM, defaultKey,
-                        "key.category.spawnerfinder.category");
-            } catch (Exception e2) {
-                return null;
-            }
+            e.printStackTrace();
         }
+        return null;
     }
 
     public static void setOverlayMessage(net.minecraft.client.Minecraft client, net.minecraft.network.chat.Component message, boolean animate) {

@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -345,7 +345,7 @@ public class SpawnerHistoryScreen extends Screen {
                 return true;
             }
         }
-        if (keyEvent.key() == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyEvent.key() == InputConstants.KEY_ESCAPE) {
             this.onClose();
             return true;
         }
