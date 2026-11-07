@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Release type'
+        description: 'Release type (release, beta, alpha)'
         required: true
         default: 'release'
         type: choice
@@ -42,13 +42,14 @@ jobs:
       - name: Build mod
         run: ./gradlew build
 
-      - name: Upload to CurseForge
-        uses: KirigamiMC/curseforge-upload@v1
+      - name: Publish to CurseForge
+        uses: Kir-Antipov/mc-publish@v3
         with:
-          token: ${{ secrets.CURSEFORGE_TOKEN }}
-          project_id: '1386326'
-          game_endpoint: 'minecraft'
-          file_path: 'build/libs/spawnerfinder-2.3.0.jar'
-          game_versions: '26.3,Fabric'
-          release_type: ${{ github.event.inputs.release_type || 'release' }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-project-id: '1386326'
+          files: 'build/libs/spawnerfinder-2.3.0.jar'
+          game-versions: |
+            26.3
+            Fabric
+          release-type: ${{ github.event.inputs.release_type || 'release' }}
           changelog: ${{ github.event.inputs.changelog || github.event.release.body || 'Updated SpawnerFinder to Minecraft 26.3' }}
